@@ -17,12 +17,16 @@ namespace lidar_localization {
 CeresALOAMRegistration::CeresALOAMRegistration(
     const CeresALOAMRegistration::Config& config, 
     const Eigen::Quaterniond &dq, const Eigen::Vector3d &dt
-) {   
+) {
     //
     // config optimizer:
-    // 
+    //
     // 1. parameterization:
-    config_.q_parameterization_ptr = new ceres::EigenQuaternionParameterization();
+#if auto_or_analytic == 0
+    // config_.q_parameterization_ptr = new ceres::EigenQuaternionParameterization();
+#elif auto_or_analytic == 1
+    config_.q_parameterization_ptr = new PoseQuaternionParameterization();
+#endif
     // 2. loss function:
     // TODO: move param to config
     config_.loss_function_ptr = new ceres::HuberLoss(0.10);
@@ -40,34 +44,47 @@ CeresALOAMRegistration::CeresALOAMRegistration(
     //
     // config target variables:
     //
-    param_.q[0] = dq.x(); param_.q[1] = dq.y(); param_.q[2] = dq.z(); param_.q[3] = dq.w();
-    param_.t[0] = dt.x(); param_.t[1] = dt.y(); param_.t[2] = dt.z();
+    param_.q[0] = dq.x();
+    param_.q[1] = dq.y();
+    param_.q[2] = dq.z();
+    param_.q[3] = dq.w();
+    param_.t[0] = dt.x();
+    param_.t[1] = dt.y();
+    param_.t[2] = dt.z();
     problem_.AddParameterBlock(param_.q, 4, config_.q_parameterization_ptr);
     problem_.AddParameterBlock(param_.t, 3);
 }
 
-CeresALOAMRegistration::~CeresALOAMRegistration() {
+CeresALOAMRegistration::~CeresALOAMRegistration()
+{
 }
 
 /**
-  * @brief  add residual block for edge constraint from lidar frontend
-  * @param  source, source point  
-  * @param  target_x, target point x
-  * @param  target_y, target point y
-  * @param  ratio, interpolation ratio 
-  * @return void
-  */
+ * @brief  add residual block for edge constraint from lidar frontend
+ * @param  source, source point
+ * @param  target_x, target point x
+ * @param  target_y, target point y
+ * @param  ratio, interpolation ratio
+ * @return void
+ */
 bool CeresALOAMRegistration::AddEdgeFactor(
     const Eigen::Vector3d &source,
     const Eigen::Vector3d &target_x, const Eigen::Vector3d &target_y,
-    const double &ratio
-) {
+    const double &ratio)
+{
+#if auto_or_analytic == 0
     ceres::CostFunction *factor_edge = LidarEdgeFactor::Create(
         source, 
         target_x, target_y, 
         ratio
     );
-    
+#elif auto_or_analytic == 1
+    ceres::CostFunction *factor_edge = new LidarEdgeFactorClass(
+        source, 
+        target_x, target_y, 
+        ratio
+    );
+#endif
     problem_.AddResidualBlock(
         factor_edge, 
         config_.loss_function_ptr, 
@@ -91,12 +108,19 @@ bool CeresALOAMRegistration::AddPlaneFactor(
     const Eigen::Vector3d &target_x, const Eigen::Vector3d &target_y, const Eigen::Vector3d &target_z,
     const double &ratio
 ) {
+#if auto_or_analytic == 0
     ceres::CostFunction *factor_plane = LidarPlaneFactor::Create(
         source, 
         target_x, target_y, target_z, 
         ratio
     );
-
+#elif auto_or_analytic == 1
+    ceres::CostFunction *factor_plane = new LidarPlaneFactorClass(
+        source, 
+        target_x, target_y, target_z, 
+        ratio
+    );
+#endif
     problem_.AddResidualBlock(
         factor_plane,
         config_.loss_function_ptr, 

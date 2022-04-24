@@ -285,8 +285,13 @@ int main(int argc, char **argv)
 
                     //ceres::LossFunction *loss_function = NULL;
                     ceres::LossFunction *loss_function = new ceres::HuberLoss(0.1);
-                    ceres::LocalParameterization *q_parameterization =
-                        new ceres::EigenQuaternionParameterization();
+                    // ceres::LocalParameterization *q_parameterization =
+                    // // new ceres::EigenQuaternionParameterization();
+#if auto_or_analytic == 0
+                    ceres::LocalParameterization *q_parameterization new ceres::EigenQuaternionParameterization();
+#elif auto_or_analytic == 1
+                    ceres::LocalParameterization *q_parameterization = new PoseQuaternionParameterization();
+#endif
                     ceres::Problem::Options problem_options;
 
                     ceres::Problem problem(problem_options);
@@ -380,7 +385,11 @@ int main(int argc, char **argv)
                                 s = (cornerPointsSharp->points[i].intensity - int(cornerPointsSharp->points[i].intensity)) / SCAN_PERIOD;
                             else
                                 s = 1.0;
+#if auto_or_analytic == 0
                             ceres::CostFunction *cost_function = LidarEdgeFactor::Create(curr_point, last_point_a, last_point_b, s);
+#elif auto_or_analytic == 1
+                            ceres::CostFunction *cost_function = new LidarEdgeFactorClass(curr_point, last_point_a, last_point_b, s);
+#endif
                             problem.AddResidualBlock(cost_function, loss_function, para_q, para_t);
                             corner_correspondence++;
                         }
@@ -478,7 +487,11 @@ int main(int argc, char **argv)
                                     s = (surfPointsFlat->points[i].intensity - int(surfPointsFlat->points[i].intensity)) / SCAN_PERIOD;
                                 else
                                     s = 1.0;
+#if auto_or_analytic == 0
                                 ceres::CostFunction *cost_function = LidarPlaneFactor::Create(curr_point, last_point_a, last_point_b, last_point_c, s);
+#elif auto_or_analytic == 1
+                                ceres::CostFunction *cost_function = new LidarPlaneFactorClass(curr_point, last_point_a, last_point_b, last_point_c, s);
+#endif
                                 problem.AddResidualBlock(cost_function, loss_function, para_q, para_t);
                                 plane_correspondence++;
                             }

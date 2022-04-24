@@ -564,8 +564,13 @@ void process()
 				{
 					//ceres::LossFunction *loss_function = NULL;
 					ceres::LossFunction *loss_function = new ceres::HuberLoss(0.1);
-					ceres::LocalParameterization *q_parameterization =
-						new ceres::EigenQuaternionParameterization();
+					// ceres::LocalParameterization *q_parameterization =
+					// 	// new ceres::EigenQuaternionParameterization(); // PoseQuaternionParameterization
+#if auto_or_analytic == 0
+                    ceres::LocalParameterization *q_parameterization new ceres::EigenQuaternionParameterization();
+#elif auto_or_analytic == 1
+                    ceres::LocalParameterization *q_parameterization = new PoseQuaternionParameterization();
+#endif
 					ceres::Problem::Options problem_options;
 
 					ceres::Problem problem(problem_options);
@@ -615,8 +620,11 @@ void process()
 								Eigen::Vector3d point_a, point_b;
 								point_a = 0.1 * unit_direction + point_on_line;
 								point_b = -0.1 * unit_direction + point_on_line;
-
+#if auto_or_analytic == 0
 								ceres::CostFunction *cost_function = LidarEdgeFactor::Create(curr_point, point_a, point_b, 1.0);
+#elif auto_or_analytic == 1
+								ceres::CostFunction *cost_function = new LidarEdgeFactorClass(curr_point, point_a, point_b, 1.0);
+#endif
 								problem.AddResidualBlock(cost_function, loss_function, parameters, parameters + 4);
 								corner_num++;	
 							}							
