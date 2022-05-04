@@ -8,19 +8,20 @@
 #include "lidar_localization/global_defination/global_defination.h"
 
 namespace lidar_localization {
+    // 闭环检测：
 LoopClosingFlow::LoopClosingFlow(ros::NodeHandle& nh) {
-    // subscriber:
+    // subscriber: 后端优化的pub
     key_scan_sub_ptr_ = std::make_shared<CloudSubscriber>(nh, "/key_scan", 100000);
     key_frame_sub_ptr_ = std::make_shared<KeyFrameSubscriber>(nh, "/key_frame", 100000);
     key_gnss_sub_ptr_ = std::make_shared<KeyFrameSubscriber>(nh, "/key_gnss", 100000);
-    // publisher
+    // publisher || 闭环检测的位姿
     loop_pose_pub_ptr_ = std::make_shared<LoopPosePublisher>(nh, "/loop_pose", "/map", 100);
     // loop closing
     loop_closing_ptr_ = std::make_shared<LoopClosing>();
 }
 
 bool LoopClosingFlow::Run() {
-    if (!ReadData())
+    if (!ReadData()) // 读取数据
         return false;
 
     while(HasData()) {
@@ -84,7 +85,7 @@ bool LoopClosingFlow::ValidData() {
 
     return true;
 }
-
+// pub闭环检测得到的位姿
 bool LoopClosingFlow::PublishData() {
     if (loop_closing_ptr_->HasNewLoopPose()) 
         loop_pose_pub_ptr_->Publish(loop_closing_ptr_->GetCurrentLoopPose());

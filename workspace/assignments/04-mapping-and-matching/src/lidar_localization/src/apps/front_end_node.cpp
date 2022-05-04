@@ -20,11 +20,11 @@ int main(int argc, char *argv[]) {
     ros::NodeHandle nh;
 
     std::string cloud_topic, odom_topic;
-    nh.param<std::string>("cloud_topic", cloud_topic, "/synced_cloud");
+    nh.param<std::string>("cloud_topic", cloud_topic, "/synced_cloud"); // 畸变补偿后点云，
     nh.param<std::string>("odom_topic", odom_topic, "/laser_odom");
 
     // subscribe to
-    // a. undistorted Velodyne measurement
+    // a. undistorted Velodyne measurement // 畸变补偿后的点云 || 还有gnss的位姿、时间戳呢？
     // publish
     // a. lidar odometry estimation
     std::shared_ptr<FrontEndFlow> front_end_flow_ptr = std::make_shared<FrontEndFlow>(nh, cloud_topic, odom_topic);

@@ -39,6 +39,10 @@ docker login --username=937570601@qq.com registry.cn-shanghai.aliyuncs.com
 docker pull registry.cn-shanghai.aliyuncs.com/shenlanxueyuan/sensor-fusion-workspace:bionic-cpu-vnc
 ```
 
+
+
+
+
 ### 及格要求: 跑通建图流程、保存地图，并截图显示完整地图
 
 启动Docker后, 打开浏览器, 进入Web Workspace. 启动Terminator, 将两个Shell的工作目录切换如下:
@@ -92,6 +96,10 @@ rosservice call /save_scan_context
 
 <img src="doc/images/demo-partial-mapping.png" alt="Mapping and Map-Based Localization" width="100%">
 
+
+
+
+
 ### 良好要求: 在建图的基础上，加载点云地图，实现在地图原点的初始化 (此功能提供的代码已实现)
 
 **启动解决方案如下**. **注意**: 在启动前, 请确保已成功运行Q1, 并保存**Map**以及**Scan Context Data**
@@ -107,6 +115,17 @@ roslaunch lidar_localization matching.launch
 
 <img src="doc/images/demo-matching.png" alt="Mapping and Map-Based Localization" width="100%">
 
+
+
+
+
 ### 优秀要求: 在建图的基础上，实现全局初始化的要求
 
 全局搜索**TODO**. Good Luck!
+
+
+
+```
+rosnag play xxx.bag -s 100  || 200 300 400 
+```
+

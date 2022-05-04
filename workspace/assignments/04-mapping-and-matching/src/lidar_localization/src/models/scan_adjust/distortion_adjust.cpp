@@ -7,27 +7,36 @@
 #include "glog/logging.h"
 
 namespace lidar_localization {
+    // 周期比例、运动速度
 void DistortionAdjust::SetMotionInfo(float scan_period, VelocityData velocity_data) {
     scan_period_ = scan_period;
     velocity_ << velocity_data.linear_velocity.x, velocity_data.linear_velocity.y, velocity_data.linear_velocity.z;
     angular_rate_ << velocity_data.angular_velocity.x, velocity_data.angular_velocity.y, velocity_data.angular_velocity.z;
 }
 
+/**
+ * @brief 运动畸变补偿
+ * 
+ * @param input_cloud_ptr 
+ * @param output_cloud_ptr 
+ * @return true 
+ * @return false 
+ */
 bool DistortionAdjust::AdjustCloud(CloudData::CLOUD_PTR& input_cloud_ptr, CloudData::CLOUD_PTR& output_cloud_ptr) {
     CloudData::CLOUD_PTR origin_cloud_ptr(new CloudData::CLOUD(*input_cloud_ptr));
     output_cloud_ptr.reset(new CloudData::CLOUD());
 
     float orientation_space = 2.0 * M_PI;
-    float delete_space = 5.0 * M_PI / 180.0;
-    float start_orientation = atan2(origin_cloud_ptr->points[0].y, origin_cloud_ptr->points[0].x);
+    float delete_space = 5.0 * M_PI / 180.0; // 阈值
+    float start_orientation = atan2(origin_cloud_ptr->points[0].y, origin_cloud_ptr->points[0].x); // 逆时针：针对 kitti2bag 生成的bag包吧
 
-    Eigen::AngleAxisf t_V(start_orientation, Eigen::Vector3f::UnitZ());
+    Eigen::AngleAxisf t_V(start_orientation, Eigen::Vector3f::UnitZ()); // 起始时刻的旋转向量(起始0到中间mid)【kitti2bag生成的bag以中间时刻为基准，所以起始时刻=原中间时刻】
     Eigen::Matrix3f rotate_matrix = t_V.matrix();
     Eigen::Matrix4f transform_matrix = Eigen::Matrix4f::Identity();
-    transform_matrix.block<3,3>(0,0) = rotate_matrix.inverse();
-    pcl::transformPointCloud(*origin_cloud_ptr, *origin_cloud_ptr, transform_matrix);
+    transform_matrix.block<3,3>(0,0) = rotate_matrix.inverse();//(中间mid到起始0)
+    pcl::transformPointCloud(*origin_cloud_ptr, *origin_cloud_ptr, transform_matrix); // 以第一帧为代价：将点云从mid旋转回起始0
 
-    velocity_ = rotate_matrix * velocity_;
+    velocity_ = rotate_matrix * velocity_; // lader下的速度(from imu&gnss) 旋转到mid时刻=kitti2bag的初始时刻=全局过程的速度
     angular_rate_ = rotate_matrix * angular_rate_;
 
     for (size_t point_index = 1; point_index < origin_cloud_ptr->points.size(); ++point_index) {
@@ -38,15 +47,15 @@ bool DistortionAdjust::AdjustCloud(CloudData::CLOUD_PTR& input_cloud_ptr, CloudD
         if (orientation < delete_space || 2.0 * M_PI - orientation < delete_space)
             continue;
 
-        float real_time = fabs(orientation) / orientation_space * scan_period_ - scan_period_ / 2.0;
+        float real_time = fabs(orientation) / orientation_space * scan_period_ - scan_period_ / 2.0; // 减去中间时刻的时间 = 真实时间
 
         Eigen::Vector3f origin_point(origin_cloud_ptr->points[point_index].x,
                                      origin_cloud_ptr->points[point_index].y,
                                      origin_cloud_ptr->points[point_index].z);
 
-        Eigen::Matrix3f current_matrix = UpdateMatrix(real_time);
-        Eigen::Vector3f rotated_point = current_matrix * origin_point;
-        Eigen::Vector3f adjusted_point = rotated_point + velocity_ * real_time;
+        Eigen::Matrix3f current_matrix = UpdateMatrix(real_time); // R=angle_zyx ； angle=w*t
+        Eigen::Vector3f rotated_point = current_matrix * origin_point; // R * point
+        Eigen::Vector3f adjusted_point = rotated_point + velocity_ * real_time; // R*point + p(p=v*t)
         CloudData::POINT point;
         point.x = adjusted_point(0);
         point.y = adjusted_point(1);
@@ -54,7 +63,7 @@ bool DistortionAdjust::AdjustCloud(CloudData::CLOUD_PTR& input_cloud_ptr, CloudD
         output_cloud_ptr->points.push_back(point);
     }
 
-    pcl::transformPointCloud(*output_cloud_ptr, *output_cloud_ptr, transform_matrix.inverse());
+    pcl::transformPointCloud(*output_cloud_ptr, *output_cloud_ptr, transform_matrix.inverse()); // 去畸变后的点云旋转回去
     return true;
 }
 

@@ -1,0 +1,13 @@
+Log file created at: 2022/04/24 04:03:26
+Running on machine: ae6c65286844
+Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu threadid file:line] msg
+E0424 04:03:26.926543 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+E0424 04:03:26.940500 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+E0424 04:03:26.954159 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+E0424 04:03:26.967850 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+E0424 04:05:48.252069 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+E0424 04:05:48.268486 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+E0424 04:06:30.716341 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+E0424 04:06:30.729266 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+E0424 04:06:30.742559 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+E0424 04:06:30.755192 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.

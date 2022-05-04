@@ -41,7 +41,7 @@ bool NDTRegistration::SetRegistrationParam(float res, float step_size, float tra
 
     return true;
 }
-
+// 输入target
 bool NDTRegistration::SetInputTarget(const CloudData::CLOUD_PTR& input_target) {
     ndt_ptr_->setInputTarget(input_target);
 

@@ -30,13 +30,13 @@ bool LoopClosing::InitWithConfig() {
     YAML::Node config_node = YAML::LoadFile(config_file_path);
 
     std::cout << "-----------------Init Loop-Closing Detection-------------------" << std::endl;
-    InitParam(config_node);
-    InitDataPath(config_node);
+    InitParam(config_node); // 参数初始化
+    InitDataPath(config_node); //路径
 
     InitFilter("map", map_filter_ptr_, config_node);
     InitFilter("scan", scan_filter_ptr_, config_node);
 
-    InitLoopClosure(config_node);
+    InitLoopClosure(config_node); // 闭环检测初始化
 
     InitRegistration(registration_ptr_, config_node);
 
@@ -109,6 +109,15 @@ bool LoopClosing::InitRegistration(std::shared_ptr<RegistrationInterface>& regis
     return true;
 }
 
+/**
+ * @brief 闭环检测-主要流程：
+ * 
+ * @param key_scan 
+ * @param key_frame 
+ * @param key_gnss 
+ * @return true 
+ * @return false 
+ */
 bool LoopClosing::Update(
     const CloudData &key_scan, 
     const KeyFrame &key_frame, 
@@ -119,14 +128,14 @@ bool LoopClosing::Update(
 
     has_new_loop_pose_ = false;
 
-    scan_context_manager_ptr_->Update(
+    scan_context_manager_ptr_->Update( // 检测有无闭环？
         key_scan, key_gnss
     );
 
     all_key_frames_.push_back(key_frame);
     all_key_gnss_.push_back(key_gnss);
 
-    if (!DetectNearestKeyFrame(key_frame_index, yaw_change_in_rad))
+    if (!DetectNearestKeyFrame(key_frame_index, yaw_change_in_rad)) // 最近邻检测
         return false;
 
     if (!CloudRegistration(key_frame_index, yaw_change_in_rad))
@@ -135,7 +144,14 @@ bool LoopClosing::Update(
     has_new_loop_pose_ = true;
     return true;
 }
-
+/**
+ * @brief 最近邻
+ * 
+ * @param key_frame_index 
+ * @param yaw_change_in_rad 
+ * @return true 
+ * @return false 
+ */
 bool LoopClosing::DetectNearestKeyFrame(
     int& key_frame_index,
     float& yaw_change_in_rad
@@ -221,6 +237,14 @@ bool LoopClosing::DetectNearestKeyFrame(
     }
 }
 
+/**
+ * @brief 点云
+ * 
+ * @param key_frame_index 
+ * @param yaw_change_in_rad 
+ * @return true 
+ * @return false 
+ */
 bool LoopClosing::CloudRegistration(
     const int key_frame_index,
     const float yaw_change_in_rad
@@ -240,7 +264,7 @@ bool LoopClosing::CloudRegistration(
 
     // 匹配
     Eigen::Matrix4f result_pose = Eigen::Matrix4f::Identity();
-    Registration(map_cloud_ptr, scan_cloud_ptr, scan_pose, result_pose);
+    Registration(map_cloud_ptr, scan_cloud_ptr, scan_pose, result_pose); // ndt匹配
 
     // 计算相对位姿
     current_loop_pose_.pose = map_pose.inverse() * result_pose;

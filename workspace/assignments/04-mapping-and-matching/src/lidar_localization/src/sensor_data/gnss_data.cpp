@@ -7,6 +7,10 @@
 
 #include "glog/logging.h"
 
+#include <iostream>
+// #include <iomanip>
+// #include "stdlib.h"
+
 //静态成员变量必须在类外初始化
 double lidar_localization::GNSSData::origin_longitude = 0.0;
 double lidar_localization::GNSSData::origin_latitude = 0.0;
@@ -15,20 +19,31 @@ bool lidar_localization::GNSSData::origin_position_inited = false;
 GeographicLib::LocalCartesian lidar_localization::GNSSData::geo_converter;
 
 namespace lidar_localization {
+// 第一帧数据 
 void GNSSData::InitOriginPosition() {
+    // TODO: GNSS粗略初始化，原点坐标输入
     geo_converter.Reset(latitude, longitude, altitude);
+
+    // geo_converter.Reset(48.9826506625, 8.39044984163, 116.395850034); // 点云初始位姿
 
     origin_longitude = longitude;
     origin_latitude = latitude;
     origin_altitude = altitude;
 
+    // std::cout.precision(12); //setprecision(12); //
+    // std::cout << "GNSS first point :\n"
+    //           << origin_longitude << " " // 8.39044984163 48.9826506625 116.395850034
+    //           << origin_latitude << " "
+    //           << origin_altitude << " " << std::endl;
+
     origin_position_inited = true;
 }
-
+// 更新xyz坐标
 void GNSSData::UpdateXYZ() {
     if (!origin_position_inited) {
         LOG(WARNING) << "GeoConverter has not set origin position";
     }
+    // 坐标系转换，将gps的经纬度、海拔从大地坐标系转换到局部笛卡尔坐标系；
     geo_converter.Forward(latitude, longitude, altitude, local_E, local_N, local_U);
 }
 

@@ -78,7 +78,14 @@ bool FrontEnd::SetInitPose(const Eigen::Matrix4f& init_pose) {
     init_pose_ = init_pose;
     return true;
 }
-
+/**
+ * @brief 
+ * 
+ * @param cloud_data 
+ * @param cloud_pose 
+ * @return true 
+ * @return false 
+ */
 bool FrontEnd::Update(const CloudData& cloud_data, Eigen::Matrix4f& cloud_pose) {
     static Eigen::Matrix4f step_pose = Eigen::Matrix4f::Identity();
     static Eigen::Matrix4f last_pose = init_pose_;
@@ -110,14 +117,14 @@ bool FrontEnd::Update(const CloudData& cloud_data, Eigen::Matrix4f& cloud_pose) 
     // update lidar odometry using scan match result:
     // 
     CloudData::CLOUD_PTR result_cloud_ptr(new CloudData::CLOUD());
-    registration_ptr_->ScanMatch(filtered_cloud_ptr, predict_pose, result_cloud_ptr, current_frame_.pose);
+    registration_ptr_->ScanMatch(filtered_cloud_ptr, predict_pose, result_cloud_ptr, current_frame_.pose); //得到当前帧位姿 k帧
     cloud_pose = current_frame_.pose;
 
     //
     // update init pose for next scan match:
     //
-    step_pose = last_pose.inverse() * current_frame_.pose;
-    predict_pose = current_frame_.pose * step_pose;
+    step_pose = last_pose.inverse() * current_frame_.pose; // 上上帧的逆 * 上一帧 = delta
+    predict_pose = current_frame_.pose * step_pose; // k+1帧=k*k-1 || 当前帧=上一帧*delta
     last_pose = current_frame_.pose;
 
     // 
@@ -133,6 +140,7 @@ bool FrontEnd::Update(const CloudData& cloud_data, Eigen::Matrix4f& cloud_pose) 
     return true;
 }
 
+// 这里现在只维护局部地图。
 bool FrontEnd::UpdateWithNewFrame(const Frame& new_key_frame) {
     Frame key_frame = new_key_frame;
     // 这一步的目的是为了把关键帧的点云保存下来
@@ -140,13 +148,13 @@ bool FrontEnd::UpdateWithNewFrame(const Frame& new_key_frame) {
     // 此时无论你放多少个关键帧在容器里，这些关键帧点云指针都是指向的同一个点云
     key_frame.cloud_data.cloud_ptr.reset(new CloudData::CLOUD(*new_key_frame.cloud_data.cloud_ptr));
     
-    // keep only the latest local_frame_num_ frames:
+    // keep only the latest local_frame_num_ frames: || 只保留最新的本地帧
     local_map_frames_.push_back(key_frame);
-    while (local_map_frames_.size() > static_cast<size_t>(local_frame_num_)) {
+    while (local_map_frames_.size() > static_cast<size_t>(local_frame_num_)) { // 只保留20个关键帧
         local_map_frames_.pop_front();
     }
 
-    // transform all local frame measurements to map frame
+    // transform all local frame measurements to map frame || 将lader点云通过位姿变换到局部地图中（lader系到世界系）
     // to create local map:
     local_map_ptr_.reset(new CloudData::CLOUD());
     CloudData::CLOUD_PTR transformed_cloud_ptr(new CloudData::CLOUD());
@@ -160,7 +168,7 @@ bool FrontEnd::UpdateWithNewFrame(const Frame& new_key_frame) {
         *local_map_ptr_ += *transformed_cloud_ptr;
     }
 
-    // scan-to-map matching:
+    // scan-to-map matching: || 滑动窗口：局部地图维护更新
     // set target as local map:
     if (local_map_frames_.size() < 10) {
         registration_ptr_->SetInputTarget(local_map_ptr_);

@@ -23,6 +23,7 @@ G2oGraphOptimizer::G2oGraphOptimizer(const std::string &solver_type) {
     robust_kernel_factory_ = g2o::RobustKernelFactory::instance();
 }
 
+// g2o优化
 bool G2oGraphOptimizer::Optimize() {
     static int optimize_cnt = 0;
     if(graph_ptr_->edges().size() < 1) {
@@ -30,10 +31,10 @@ bool G2oGraphOptimizer::Optimize() {
     }
 
     TicToc optimize_time;
-    graph_ptr_->initializeOptimization();
-    graph_ptr_->computeInitialGuess();
-    graph_ptr_->computeActiveErrors();
-    graph_ptr_->setVerbose(false);
+    graph_ptr_->initializeOptimization(); // 初始化
+    graph_ptr_->computeInitialGuess(); // 先验
+    graph_ptr_->computeActiveErrors(); // 实际误差
+    graph_ptr_->setVerbose(false); // 
 
     double chi2 = graph_ptr_->chi2();
     int iterations = graph_ptr_->optimize(max_iterations_num_);

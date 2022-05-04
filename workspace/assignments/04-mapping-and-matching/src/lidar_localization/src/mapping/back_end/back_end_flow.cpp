@@ -11,6 +11,7 @@
 #include "lidar_localization/global_defination/global_defination.h"
 
 namespace lidar_localization {
+    // 后端优化：sub、pub
 BackEndFlow::BackEndFlow(ros::NodeHandle& nh, std::string cloud_topic, std::string odom_topic) {
     cloud_sub_ptr_ = std::make_shared<CloudSubscriber>(nh, cloud_topic, 100000);
     gnss_pose_sub_ptr_ = std::make_shared<OdometrySubscriber>(nh, "/synced_gnss", 100000);
@@ -21,18 +22,20 @@ BackEndFlow::BackEndFlow(ros::NodeHandle& nh, std::string cloud_topic, std::stri
     key_scan_pub_ptr_ = std::make_shared<CloudPublisher>(nh, "/key_scan", "/velo_link", 100);
     key_frame_pub_ptr_ = std::make_shared<KeyFramePublisher>(nh, "/key_frame", "/map", 100);
     key_gnss_pub_ptr_ = std::make_shared<KeyFramePublisher>(nh, "/key_gnss", "/map", 100);
+    // pub 优化后的 关键帧
     key_frames_pub_ptr_ = std::make_shared<KeyFramesPublisher>(nh, "/optimized_key_frames", "/map", 100);
 
     back_end_ptr_ = std::make_shared<BackEnd>();
 }
 
+// 主要流程
 bool BackEndFlow::Run() {
     // load messages into buffer:
-    if (!ReadData())
+    if (!ReadData()) // 读取数据
         return false;
     
     // add loop poses for graph optimization:
-    MaybeInsertLoopPose();
+    MaybeInsertLoopPose(); // 闭环检测的加入后端优化中
 
     while(HasData()) {
         // make sure undistorted Velodyne measurement -- lidar pose in map frame -- lidar odometry are synced:
@@ -46,13 +49,18 @@ bool BackEndFlow::Run() {
 
     return true;
 }
-
+/**
+ * @brief 
+ * 优化map
+ * @return true 
+ * @return false 
+ */
 bool BackEndFlow::ForceOptimize() {
-    back_end_ptr_->ForceOptimize();
-    if (back_end_ptr_->HasNewOptimized()) {
-        std::deque<KeyFrame> optimized_key_frames;
+    back_end_ptr_->ForceOptimize(); // 执行优化，得到优化后的位姿
+    if (back_end_ptr_->HasNewOptimized()) { // 若成功，true
+        std::deque<KeyFrame> optimized_key_frames;//位姿、index
         back_end_ptr_->GetOptimizedKeyFrames(optimized_key_frames);
-        key_frames_pub_ptr_->Publish(optimized_key_frames);
+        key_frames_pub_ptr_->Publish(optimized_key_frames);//准备发布
     }
     return true;
 }
@@ -66,6 +74,7 @@ bool BackEndFlow::ReadData() {
     return true;
 }
 
+// 闭环检测位姿
 bool BackEndFlow::MaybeInsertLoopPose() {
     while (loop_pose_data_buff_.size() > 0) {
         back_end_ptr_->InsertLoopPose(loop_pose_data_buff_.front());
@@ -115,22 +124,24 @@ bool BackEndFlow::ValidData() {
     return true;
 }
 
+// 后端优化：
 bool BackEndFlow::UpdateBackEnd() {
     static bool odometry_inited = false;
     static Eigen::Matrix4f odom_init_pose = Eigen::Matrix4f::Identity();
 
     if (!odometry_inited) {
         odometry_inited = true;
-        // lidar odometry frame in map frame:
+        // lidar odometry frame in map frame: || 将Lidar里程计的位姿变换到gnss系（map系）下
         odom_init_pose = current_gnss_pose_data_.pose * current_laser_odom_data_.pose.inverse();
     }
-    // current lidar odometry in map frame:
+    // current lidar odometry in map frame: ||（1.轨迹对齐）
     current_laser_odom_data_.pose = odom_init_pose * current_laser_odom_data_.pose;
 
     // optimization is carried out in map frame:
     return back_end_ptr_->Update(current_cloud_data_, current_laser_odom_data_, current_gnss_pose_data_);
 }
 
+// pub 
 bool BackEndFlow::PublishData() {
     transformed_odom_pub_ptr_->Publish(current_laser_odom_data_.pose, current_laser_odom_data_.time);
 

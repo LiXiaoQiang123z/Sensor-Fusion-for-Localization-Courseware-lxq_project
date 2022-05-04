@@ -27,6 +27,7 @@ void CloudSubscriber::msg_callback(const sensor_msgs::PointCloud2::ConstPtr& clo
     buff_mutex_.unlock();
 }
 
+// 数据解析：新的数据插入到data_buff中
 void CloudSubscriber::ParseData(std::deque<CloudData>& cloud_data_buff) {
     buff_mutex_.lock();
 

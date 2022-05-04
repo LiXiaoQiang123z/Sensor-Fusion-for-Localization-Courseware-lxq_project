@@ -12,19 +12,20 @@ LoopPoseSubscriber::LoopPoseSubscriber(ros::NodeHandle& nh, std::string topic_na
     subscriber_ = nh_.subscribe(topic_name, buff_size, &LoopPoseSubscriber::msg_callback, this);
 }
 
+// 回环检测sub：
 void LoopPoseSubscriber::msg_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& loop_pose_msg_ptr) {
     buff_mutex_.lock();
     LoopPose loop_pose;
     loop_pose.time = loop_pose_msg_ptr->header.stamp.toSec();
-    loop_pose.index0 = (unsigned int)loop_pose_msg_ptr->pose.covariance[0];
+    loop_pose.index0 = (unsigned int)loop_pose_msg_ptr->pose.covariance[0]; // 协方差？？？ || 闭环关键帧的位姿
     loop_pose.index1 = (unsigned int)loop_pose_msg_ptr->pose.covariance[1];
 
-    loop_pose.pose(0,3) = loop_pose_msg_ptr->pose.pose.position.x;
+    loop_pose.pose(0,3) = loop_pose_msg_ptr->pose.pose.position.x; // 相对位姿变换-平移
     loop_pose.pose(1,3) = loop_pose_msg_ptr->pose.pose.position.y;
     loop_pose.pose(2,3) = loop_pose_msg_ptr->pose.pose.position.z;
 
     Eigen::Quaternionf q;
-    q.x() = loop_pose_msg_ptr->pose.pose.orientation.x;
+    q.x() = loop_pose_msg_ptr->pose.pose.orientation.x;// 相对位姿变换-旋转
     q.y() = loop_pose_msg_ptr->pose.pose.orientation.y;
     q.z() = loop_pose_msg_ptr->pose.pose.orientation.z;
     q.w() = loop_pose_msg_ptr->pose.pose.orientation.w;

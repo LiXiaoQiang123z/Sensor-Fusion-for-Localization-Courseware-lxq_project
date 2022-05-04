@@ -1,0 +1,343 @@
+Log file created at: 2022/04/24 04:03:26
+Running on machine: ae6c65286844
+Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu threadid file:line] msg
+W0424 04:03:26.926257 14302 residual_block.cc:129] 
+
+Error in evaluating the ResidualBlock.
+
+There are two possible reasons. Either the CostFunction did not evaluate and fill all    
+residual and jacobians that were requested or there was a non-finite value (nan/infinite)
+generated during the or jacobian computation. 
+
+Residual Block size: 2 parameter blocks x 1 residuals
+
+For each parameter block, the value of the parameters are printed in the first column   
+and the value of the jacobian under the corresponding residual. If a ParameterBlock was 
+held constant then the corresponding jacobian is printed as 'Not Computed'. If an entry 
+of the Jacobian/residual array was requested but was not written to by user code, it is 
+indicated by 'Uninitialized'. This is an error. Residuals or Jacobian values evaluating 
+to Inf or NaN is also an error.  
+
+Residuals:                0 
+
+Parameter Block 0, size: 4
+
+ 0.000677064 |         -nan 
+  0.00214338 |         -nan 
+ -0.00114402 |         -nan 
+    0.999997 |            0 
+
+Parameter Block 1, size: 3
+
+    0.941366 |         -nan 
+  0.00185292 |         -nan 
+   0.0153712 |         -nan 
+
+
+E0424 04:03:26.926543 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+W0424 04:03:26.940418 14302 residual_block.cc:129] 
+
+Error in evaluating the ResidualBlock.
+
+There are two possible reasons. Either the CostFunction did not evaluate and fill all    
+residual and jacobians that were requested or there was a non-finite value (nan/infinite)
+generated during the or jacobian computation. 
+
+Residual Block size: 2 parameter blocks x 1 residuals
+
+For each parameter block, the value of the parameters are printed in the first column   
+and the value of the jacobian under the corresponding residual. If a ParameterBlock was 
+held constant then the corresponding jacobian is printed as 'Not Computed'. If an entry 
+of the Jacobian/residual array was requested but was not written to by user code, it is 
+indicated by 'Uninitialized'. This is an error. Residuals or Jacobian values evaluating 
+to Inf or NaN is also an error.  
+
+Residuals:                0 
+
+Parameter Block 0, size: 4
+
+ 0.000677064 |         -nan 
+  0.00214338 |         -nan 
+ -0.00114402 |         -nan 
+    0.999997 |            0 
+
+Parameter Block 1, size: 3
+
+    0.941366 |         -nan 
+  0.00185292 |         -nan 
+   0.0153712 |         -nan 
+
+
+E0424 04:03:26.940500 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+W0424 04:03:26.954090 14302 residual_block.cc:129] 
+
+Error in evaluating the ResidualBlock.
+
+There are two possible reasons. Either the CostFunction did not evaluate and fill all    
+residual and jacobians that were requested or there was a non-finite value (nan/infinite)
+generated during the or jacobian computation. 
+
+Residual Block size: 2 parameter blocks x 1 residuals
+
+For each parameter block, the value of the parameters are printed in the first column   
+and the value of the jacobian under the corresponding residual. If a ParameterBlock was 
+held constant then the corresponding jacobian is printed as 'Not Computed'. If an entry 
+of the Jacobian/residual array was requested but was not written to by user code, it is 
+indicated by 'Uninitialized'. This is an error. Residuals or Jacobian values evaluating 
+to Inf or NaN is also an error.  
+
+Residuals:                0 
+
+Parameter Block 0, size: 4
+
+ 0.000677064 |         -nan 
+  0.00214338 |         -nan 
+ -0.00114402 |         -nan 
+    0.999997 |            0 
+
+Parameter Block 1, size: 3
+
+    0.941366 |         -nan 
+  0.00185292 |         -nan 
+   0.0153712 |         -nan 
+
+
+E0424 04:03:26.954159 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+W0424 04:03:26.967725 14302 residual_block.cc:129] 
+
+Error in evaluating the ResidualBlock.
+
+There are two possible reasons. Either the CostFunction did not evaluate and fill all    
+residual and jacobians that were requested or there was a non-finite value (nan/infinite)
+generated during the or jacobian computation. 
+
+Residual Block size: 2 parameter blocks x 1 residuals
+
+For each parameter block, the value of the parameters are printed in the first column   
+and the value of the jacobian under the corresponding residual. If a ParameterBlock was 
+held constant then the corresponding jacobian is printed as 'Not Computed'. If an entry 
+of the Jacobian/residual array was requested but was not written to by user code, it is 
+indicated by 'Uninitialized'. This is an error. Residuals or Jacobian values evaluating 
+to Inf or NaN is also an error.  
+
+Residuals:                0 
+
+Parameter Block 0, size: 4
+
+ 0.000677064 |         -nan 
+  0.00214338 |         -nan 
+ -0.00114402 |         -nan 
+    0.999997 |            0 
+
+Parameter Block 1, size: 3
+
+    0.941366 |         -nan 
+  0.00185292 |         -nan 
+   0.0153712 |         -nan 
+
+
+E0424 04:03:26.967850 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+W0424 04:05:48.251888 14302 residual_block.cc:129] 
+
+Error in evaluating the ResidualBlock.
+
+There are two possible reasons. Either the CostFunction did not evaluate and fill all    
+residual and jacobians that were requested or there was a non-finite value (nan/infinite)
+generated during the or jacobian computation. 
+
+Residual Block size: 2 parameter blocks x 1 residuals
+
+For each parameter block, the value of the parameters are printed in the first column   
+and the value of the jacobian under the corresponding residual. If a ParameterBlock was 
+held constant then the corresponding jacobian is printed as 'Not Computed'. If an entry 
+of the Jacobian/residual array was requested but was not written to by user code, it is 
+indicated by 'Uninitialized'. This is an error. Residuals or Jacobian values evaluating 
+to Inf or NaN is also an error.  
+
+Residuals:                0 
+
+Parameter Block 0, size: 4
+
+  0.00203575 |         -nan 
+  0.00125615 |         -nan 
+ -0.00235868 |         -nan 
+    0.999994 |            0 
+
+Parameter Block 1, size: 3
+
+    0.890951 |         -nan 
+  -0.0106246 |         -nan 
+  0.00930582 |         -nan 
+
+
+E0424 04:05:48.252069 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+W0424 04:05:48.268373 14302 residual_block.cc:129] 
+
+Error in evaluating the ResidualBlock.
+
+There are two possible reasons. Either the CostFunction did not evaluate and fill all    
+residual and jacobians that were requested or there was a non-finite value (nan/infinite)
+generated during the or jacobian computation. 
+
+Residual Block size: 2 parameter blocks x 1 residuals
+
+For each parameter block, the value of the parameters are printed in the first column   
+and the value of the jacobian under the corresponding residual. If a ParameterBlock was 
+held constant then the corresponding jacobian is printed as 'Not Computed'. If an entry 
+of the Jacobian/residual array was requested but was not written to by user code, it is 
+indicated by 'Uninitialized'. This is an error. Residuals or Jacobian values evaluating 
+to Inf or NaN is also an error.  
+
+Residuals:                0 
+
+Parameter Block 0, size: 4
+
+  0.00203575 |         -nan 
+  0.00125615 |         -nan 
+ -0.00235868 |         -nan 
+    0.999994 |            0 
+
+Parameter Block 1, size: 3
+
+    0.890951 |         -nan 
+  -0.0106246 |         -nan 
+  0.00930582 |         -nan 
+
+
+E0424 04:05:48.268486 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+W0424 04:06:30.715952 14302 residual_block.cc:129] 
+
+Error in evaluating the ResidualBlock.
+
+There are two possible reasons. Either the CostFunction did not evaluate and fill all    
+residual and jacobians that were requested or there was a non-finite value (nan/infinite)
+generated during the or jacobian computation. 
+
+Residual Block size: 2 parameter blocks x 1 residuals
+
+For each parameter block, the value of the parameters are printed in the first column   
+and the value of the jacobian under the corresponding residual. If a ParameterBlock was 
+held constant then the corresponding jacobian is printed as 'Not Computed'. If an entry 
+of the Jacobian/residual array was requested but was not written to by user code, it is 
+indicated by 'Uninitialized'. This is an error. Residuals or Jacobian values evaluating 
+to Inf or NaN is also an error.  
+
+Residuals:                0 
+
+Parameter Block 0, size: 4
+
+ 5.60735e-05 |         -nan 
+ -0.00231068 |         -nan 
+ 0.000340207 |         -nan 
+    0.999997 |            0 
+
+Parameter Block 1, size: 3
+
+    0.958368 |         -nan 
+  0.00434159 |         -nan 
+   0.0240353 |         -nan 
+
+
+E0424 04:06:30.716341 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+W0424 04:06:30.729163 14302 residual_block.cc:129] 
+
+Error in evaluating the ResidualBlock.
+
+There are two possible reasons. Either the CostFunction did not evaluate and fill all    
+residual and jacobians that were requested or there was a non-finite value (nan/infinite)
+generated during the or jacobian computation. 
+
+Residual Block size: 2 parameter blocks x 1 residuals
+
+For each parameter block, the value of the parameters are printed in the first column   
+and the value of the jacobian under the corresponding residual. If a ParameterBlock was 
+held constant then the corresponding jacobian is printed as 'Not Computed'. If an entry 
+of the Jacobian/residual array was requested but was not written to by user code, it is 
+indicated by 'Uninitialized'. This is an error. Residuals or Jacobian values evaluating 
+to Inf or NaN is also an error.  
+
+Residuals:                0 
+
+Parameter Block 0, size: 4
+
+ 5.60735e-05 |         -nan 
+ -0.00231068 |         -nan 
+ 0.000340207 |         -nan 
+    0.999997 |            0 
+
+Parameter Block 1, size: 3
+
+    0.958368 |         -nan 
+  0.00434159 |         -nan 
+   0.0240353 |         -nan 
+
+
+E0424 04:06:30.729266 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+W0424 04:06:30.742408 14302 residual_block.cc:129] 
+
+Error in evaluating the ResidualBlock.
+
+There are two possible reasons. Either the CostFunction did not evaluate and fill all    
+residual and jacobians that were requested or there was a non-finite value (nan/infinite)
+generated during the or jacobian computation. 
+
+Residual Block size: 2 parameter blocks x 1 residuals
+
+For each parameter block, the value of the parameters are printed in the first column   
+and the value of the jacobian under the corresponding residual. If a ParameterBlock was 
+held constant then the corresponding jacobian is printed as 'Not Computed'. If an entry 
+of the Jacobian/residual array was requested but was not written to by user code, it is 
+indicated by 'Uninitialized'. This is an error. Residuals or Jacobian values evaluating 
+to Inf or NaN is also an error.  
+
+Residuals:                0 
+
+Parameter Block 0, size: 4
+
+ 5.60735e-05 |         -nan 
+ -0.00231068 |         -nan 
+ 0.000340207 |         -nan 
+    0.999997 |            0 
+
+Parameter Block 1, size: 3
+
+    0.958368 |         -nan 
+  0.00434159 |         -nan 
+   0.0240353 |         -nan 
+
+
+E0424 04:06:30.742559 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.
+W0424 04:06:30.754776 14302 residual_block.cc:129] 
+
+Error in evaluating the ResidualBlock.
+
+There are two possible reasons. Either the CostFunction did not evaluate and fill all    
+residual and jacobians that were requested or there was a non-finite value (nan/infinite)
+generated during the or jacobian computation. 
+
+Residual Block size: 2 parameter blocks x 1 residuals
+
+For each parameter block, the value of the parameters are printed in the first column   
+and the value of the jacobian under the corresponding residual. If a ParameterBlock was 
+held constant then the corresponding jacobian is printed as 'Not Computed'. If an entry 
+of the Jacobian/residual array was requested but was not written to by user code, it is 
+indicated by 'Uninitialized'. This is an error. Residuals or Jacobian values evaluating 
+to Inf or NaN is also an error.  
+
+Residuals:                0 
+
+Parameter Block 0, size: 4
+
+ 5.60735e-05 |         -nan 
+ -0.00231068 |         -nan 
+ 0.000340207 |         -nan 
+    0.999997 |            0 
+
+Parameter Block 1, size: 3
+
+    0.958368 |         -nan 
+  0.00434159 |         -nan 
+   0.0240353 |         -nan 
+
+
+E0424 04:06:30.755192 14302 trust_region_minimizer.cc:73] Terminating: Residual and Jacobian evaluation failed.

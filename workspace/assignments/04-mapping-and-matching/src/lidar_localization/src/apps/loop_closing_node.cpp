@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 
         loop_closing_flow_ptr->Run();
 
-        if (save_scan_context) {
+        if (save_scan_context) { // 保存 scan context的数据
             save_scan_context = false;
             loop_closing_flow_ptr->Save();
         }

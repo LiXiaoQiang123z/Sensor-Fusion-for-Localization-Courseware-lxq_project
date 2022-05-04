@@ -27,7 +27,7 @@ bool BoxFilter::Filter(const CloudData::CLOUD_PTR& input_cloud_ptr,
     pcl_box_filter_.setMin(Eigen::Vector4f(edge_.at(0), edge_.at(2), edge_.at(4), 1.0e-6));
     pcl_box_filter_.setMax(Eigen::Vector4f(edge_.at(1), edge_.at(3), edge_.at(5), 1.0e6));
     pcl_box_filter_.setInputCloud(input_cloud_ptr);
-    pcl_box_filter_.filter(*output_cloud_ptr);
+    pcl_box_filter_.filter(*output_cloud_ptr); // 滤波
 
     return true;
 }
