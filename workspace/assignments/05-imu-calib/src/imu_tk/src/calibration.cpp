@@ -39,6 +39,13 @@ using namespace imu_tk;
 using namespace Eigen;
 using namespace std;
 
+#define AutoOrAnalytic 0
+/**
+ * @brief 残差计算
+ * 
+ * @tparam _T1 
+ */
+#if AutoOrAnalytic == 0
 template <typename _T1> struct MultiPosAccResidual
 {
   MultiPosAccResidual( 
@@ -84,10 +91,14 @@ template <typename _T1> struct MultiPosAccResidual
       //
       // TODO: implement lower triad model here
       //
+      // // mis_yz, mis_zy, mis_zx:
+      // params[0], params[1], params[2],
+      // // mis_xz, mis_xy, mis_yx:
+      // _T2(0), _T2(0), _T2(0),
       // mis_yz, mis_zy, mis_zx:
-      params[0], params[1], params[2],
-      // mis_xz, mis_xy, mis_yx:
       _T2(0), _T2(0), _T2(0),
+      // mis_xz, mis_xy, mis_yx:
+      params[0], params[1], params[2],
       //    s_x,    s_y,    s_z:
       params[3], params[4], params[5], 
       //    b_x,    b_y,    b_z: 
@@ -112,6 +123,118 @@ template <typename _T1> struct MultiPosAccResidual
   const Eigen::Matrix< _T1, 3 , 1> sample_;
 };
 
+#elif AutoOrAnalytic == 1
+
+template <typename _T1> 
+class MultiPosAccResidualAnalytic : public ceres::SizedCostFunction<1,9>
+{ // 优化参数维度：1     输入维度 ： q : 4   t : 3
+public:
+	const Eigen::Matrix< _T1, 3 , 1> sample_;
+  const _T1 g_mag_;
+
+  MultiPosAccResidualAnalytic(
+      const _T1 &g_mag,
+      const Eigen::Matrix<_T1, 3, 1> &sample) : g_mag_(g_mag), sample_(sample) {}
+
+
+  virtual bool Evaluate(double const *const *parameters,
+						  double *residuals,
+						  double **jacobians) const //   定义残差模型
+	{
+    const double* const params(parameters[0]);
+    // cout << "parameters : " << parameters[0][0]<<" "<< parameters[0][8]<< endl;
+    // cout << "params : " << params[0]<<" "<<params[8]  << endl;
+
+    Eigen::Matrix<double, 3, 1> raw_samp( 
+      double(sample_(0)), 
+      double(sample_(1)), 
+      double(sample_(2)) 
+    );
+
+    /** || TODO:初始化的结果，与论文对应 + PPT结合
+      mis_mat_ <<  _T(1)   , -mis_yz  ,  mis_zy  ,
+                    mis_xz ,  _T(1)   , -mis_zx  ,
+                   -mis_xy ,  mis_yx  ,  _T(1)   ;
+
+      scale_mat_ <<   s_x  ,   _T(0)  ,  _T(0) ,
+                     _T(0) ,    s_y   ,  _T(0) ,
+                     _T(0) ,   _T(0)  ,   s_z  ;
+
+      bias_vec_ <<  b_x , b_y , b_z ;
+     *
+     */
+    CalibratedTriad_<double> calib_triad(
+        0, 0, 0,
+        // mis_xz, mis_xy, mis_yx:
+        params[0], params[1], params[2],
+        //    s_x,    s_y,    s_z:
+        params[3], params[4], params[5],
+        //    b_x,    b_y,    b_z:
+        params[6], params[7], params[8]);
+
+    //return ms_mat_*(raw_data - bias_vec_); 
+    Eigen::Matrix<double, 3, 1> calib_samp = calib_triad.unbiasNormalize(raw_samp);
+    residuals[0] = double(g_mag_) - calib_samp.norm();
+
+
+		if (jacobians != NULL)
+		{
+			if (jacobians[0] != NULL)
+			{
+        // T
+        double s10 = params[0];
+        double s20 = params[1];
+        double s21 = params[2];
+        // K
+        double kx = params[3];
+        double ky = params[4];
+        double kz = params[5];
+        // B
+        double bx = params[6];
+        double by = params[7];
+        double bz = params[8];
+
+        // A:计算出的真值输出
+        double Ax = raw_samp[0];
+        double Ay = raw_samp[1];
+        double Az = raw_samp[2];
+        /**
+         * @brief 
+         * 求导分为三部分：
+         * part1：  f/|a| = -1
+         * part2：  |a|^2/a = a^T / |a|^2 || a = calib_samp
+         * part3：  a / theta_acc =  3*9 || 结果如下：
+         */
+        Eigen::Matrix<double, 3, 9> J_part3;
+        J_part3.setZero();
+        J_part3(1, 0) = kx * (Ax - bx);
+        J_part3(2, 1) = -kx * (Ax - bx);
+        J_part3(2, 2) = ky * (Ay - by);
+
+        J_part3(0, 3) = Ax - bx;
+        J_part3(1, 3) = s10 * (Ax - bx);
+        J_part3(2, 3) = -s20 * (Ax - bx);
+        J_part3(1, 4) = Ay - by;
+        J_part3(2, 4) = s21 * (Ay - by);
+        J_part3(2, 5) = Az - bz;
+
+        J_part3(0, 6) = -kx;
+        J_part3(1, 6) = -s10 * kx;
+        J_part3(2, 6) = s20 * kx;
+        J_part3(1, 7) = -ky;
+        J_part3(2, 7) = -s21 * ky;
+        J_part3(2, 8) = -kz;
+
+        Eigen::Map<Eigen::Matrix<double, 1, 9, Eigen::RowMajor>> J_theta_acc(jacobians[0]);
+        J_theta_acc.setZero();
+        J_theta_acc = -1 * calib_samp.transpose() / calib_samp.norm() * J_part3;
+      }
+		}
+		return true;
+	}
+};
+
+#endif
 template <typename _T1> struct MultiPosGyroResidual
 {
   MultiPosGyroResidual( const Eigen::Matrix< _T1, 3 , 1> &g_versor_pos0, 
@@ -189,6 +312,14 @@ template <typename _T>
   optimize_gyro_bias_(false),
   verbose_output_(false){}
 
+/**
+ * @brief 加速度对齐
+ * 
+ * @tparam _T 
+ * @param acc_samples 
+ * @return true 
+ * @return false 
+ */
 template <typename _T>
 bool MultiPosCalibration_<_T>::calibrateAcc( 
   const std::vector< TriadData_<_T> >& acc_samples 
@@ -199,29 +330,32 @@ bool MultiPosCalibration_<_T>::calibrateAcc(
   calib_acc_samples_.clear();
   calib_gyro_samples_.clear();
   
-  int n_samps = acc_samples.size();
+  int n_samps = acc_samples.size(); // 数据大小
   
-  DataInterval init_static_interval = DataInterval::initialInterval( acc_samples, init_interval_duration_ );
-  Eigen::Matrix<_T, 3, 1> acc_variance = dataVariance( acc_samples, init_static_interval );
+  DataInterval init_static_interval = DataInterval::initialInterval( acc_samples, init_interval_duration_ ); // 初始静态间隔
+  Eigen::Matrix<_T, 3, 1> acc_variance = dataVariance( acc_samples, init_static_interval ); // acc方差：Eq. 14, with tw = Tinit;
   _T norm_th = acc_variance.norm();
 
   _T min_cost = std::numeric_limits< _T >::max();
   int min_cost_th = -1;
   std::vector< double > min_cost_calib_params;
   
-  for (int th_mult = 2; th_mult <= 10; th_mult++)
+  for (int th_mult = 2; th_mult <= 10; th_mult++) // 为啥是2～10：迭代次数吧
   {
-    std::vector< imu_tk::DataInterval > static_intervals;
+    std::vector< imu_tk::DataInterval > static_intervals; 
     std::vector< imu_tk::TriadData_<_T> > static_samples;
     std::vector< double > acc_calib_params(9);
     
     //
     // TODO: implement lower triad model here
     //
-    acc_calib_params[0] = init_acc_calib_.misYZ();
-    acc_calib_params[1] = init_acc_calib_.misZY();
-    acc_calib_params[2] = init_acc_calib_.misZX();
-    
+    // acc_calib_params[0] = init_acc_calib_.misYZ();
+    // acc_calib_params[1] = init_acc_calib_.misZY();
+    // acc_calib_params[2] = init_acc_calib_.misZX();
+    acc_calib_params[0] = init_acc_calib_.misXZ(); // 下三角
+    acc_calib_params[1] = init_acc_calib_.misXY();
+    acc_calib_params[2] = init_acc_calib_.misYX();
+
     acc_calib_params[3] = init_acc_calib_.scaleX();
     acc_calib_params[4] = init_acc_calib_.scaleY();
     acc_calib_params[5] = init_acc_calib_.scaleZ();
@@ -231,17 +365,17 @@ bool MultiPosCalibration_<_T>::calibrateAcc(
     acc_calib_params[8] = init_acc_calib_.biasZ();
     
     std::vector< DataInterval > extracted_intervals;
-    staticIntervalsDetector ( acc_samples, th_mult*norm_th, static_intervals );
+    staticIntervalsDetector ( acc_samples, th_mult*norm_th, static_intervals ); // s intervals： static detector computed using twait and threshold;
     extractIntervalsSamples ( acc_samples, static_intervals, 
                               static_samples, extracted_intervals,
-                              interval_n_samples_, acc_use_means_ );
+                              interval_n_samples_, acc_use_means_ ); //提取间隔采样
     
     if(verbose_output_) {
       cout << "Accelerometers Calibration: Extracted "<< extracted_intervals.size()
            << " intervals using threshold multiplier "<< th_mult<<" -> ";
     }
 
-    // TODO Perform here a quality test
+    // TODO: Perform here a quality test：质量测试
     if( extracted_intervals.size() < min_num_intervals_)
     {
       if( verbose_output_) cout<<"Not enough intervals, calibration is not possible"<<endl;
@@ -250,13 +384,16 @@ bool MultiPosCalibration_<_T>::calibrateAcc(
     
     if( verbose_output_) cout<<"Trying calibrate... "<<endl;
     
-    ceres::Problem problem;
+    ceres::Problem problem; // Ceres执行优化
     for( int i = 0; i < static_samples.size(); i++)
     {
-      ceres::CostFunction* cost_function = MultiPosAccResidual<_T>::Create ( 
-        g_mag_, static_samples[i].data() 
-      );
-
+#if AutoOrAnalytic == 0
+      ceres::CostFunction *cost_function = MultiPosAccResidual<_T>::Create( //  【关键：残差&雅克比的计算】
+          g_mag_, static_samples[i].data());                                // MultiPosAccResidualAnalytic
+#elif AutoOrAnalytic == 1
+      ceres::CostFunction *cost_function = new MultiPosAccResidualAnalytic<_T>( //  【关键：残差&雅克比的计算】
+          g_mag_, static_samples[i].data());  
+#endif
       problem.AddResidualBlock ( 
         cost_function,           /* error fuction */
         NULL,                    /* squared loss */
@@ -270,7 +407,7 @@ bool MultiPosCalibration_<_T>::calibrateAcc(
 
     ceres::Solver::Summary summary;
     ceres::Solve ( options, &problem, &summary );
-    if( summary.final_cost < min_cost)
+    if( summary.final_cost < min_cost) // Minf吧
     {
       min_cost = summary.final_cost;
       min_cost_th = th_mult;
@@ -278,6 +415,11 @@ bool MultiPosCalibration_<_T>::calibrateAcc(
       min_cost_calib_params = acc_calib_params;
     } 
     cout << "residual " << summary.final_cost << endl;
+#if AutoOrAnalytic == 0
+    cout << " AutoOrAnalytic == " << AutoOrAnalytic << ",自动求导" << endl;
+#elif AutoOrAnalytic == 1
+    cout << " AutoOrAnalytic == " << AutoOrAnalytic << ",解析解求解" << endl;
+#endif
   }
   
   if( min_cost_th < 0 )
@@ -287,14 +429,19 @@ bool MultiPosCalibration_<_T>::calibrateAcc(
     return false;
   }
 
+  // 通过Minf保存的最优参数去更新acc中9个参数
   acc_calib_ = CalibratedTriad_<_T>( 
     //
     // TODO: implement lower triad model here
     // 
+    // min_cost_calib_params[0],
+    // min_cost_calib_params[1],
+    // min_cost_calib_params[2],
+    // 0,0,0,
+    0,0,0,
     min_cost_calib_params[0],
     min_cost_calib_params[1],
     min_cost_calib_params[2],
-    0,0,0,
     min_cost_calib_params[3],
     min_cost_calib_params[4],
     min_cost_calib_params[5],
@@ -307,7 +454,7 @@ bool MultiPosCalibration_<_T>::calibrateAcc(
   
   // Calibrate the input accelerometer data with the obtained calibration
   for( int i = 0; i < n_samps; i++)
-    calib_acc_samples_.push_back( acc_calib_.unbiasNormalize( acc_samples[i]) );
+    calib_acc_samples_.push_back( acc_calib_.unbiasNormalize( acc_samples[i]) ); // 通过X' = T*K*(X - B)校准之后的数据
   
   if(verbose_output_) 
   {
@@ -329,11 +476,20 @@ bool MultiPosCalibration_<_T>::calibrateAcc(
     
 }
 
+/**
+ * @brief 关键：对齐部分
+ * 
+ * @tparam _T 
+ * @param acc_samples 
+ * @param gyro_samples 
+ * @return true 
+ * @return false 
+ */
 template <typename _T> 
   bool MultiPosCalibration_<_T>::calibrateAccGyro ( const vector< TriadData_<_T> >& acc_samples, 
                                                    const vector< TriadData_<_T> >& gyro_samples )
 {
-  if( !calibrateAcc( acc_samples ) )
+  if( !calibrateAcc( acc_samples ) ) // 对齐加速度
     return false;
   
   cout<<"Gyroscopes calibration: calibrating..."<<endl;
@@ -342,17 +498,17 @@ template <typename _T>
   std::vector< DataInterval > extracted_intervals;
   extractIntervalsSamples ( calib_acc_samples_, min_cost_static_intervals_, 
                             static_acc_means, extracted_intervals,
-                            interval_n_samples_, true );
+                            interval_n_samples_, true ); // 
   
   int n_static_pos = static_acc_means.size(), n_samps = gyro_samples.size();
   
   // Compute the gyroscopes biases in the (static) initialization interval
-  DataInterval init_static_interval = DataInterval::initialInterval( gyro_samples, init_interval_duration_ );
+  DataInterval init_static_interval = DataInterval::initialInterval( gyro_samples, init_interval_duration_ ); // 初始化静态方差
   Eigen::Matrix<_T, 3, 1> gyro_bias = dataMean( gyro_samples, init_static_interval );
   
   gyro_calib_ = CalibratedTriad_<_T>(0, 0, 0, 0, 0, 0, 
                                     1.0, 1.0, 1.0, 
-                                    gyro_bias(0), gyro_bias(1), gyro_bias(2) );
+                                    gyro_bias(0), gyro_bias(1), gyro_bias(2) ); // 12个待求参数
   
 
   // calib_gyro_samples_ already cleared in calibrateAcc()
@@ -417,10 +573,10 @@ template <typename _T>
 //         <<" v1 : "<< g_versor_pos1(0)<<" "<< g_versor_pos1(1)<<" "<< g_versor_pos1(2)<<endl;
     
     DataInterval gyro_interval(gyro_idx0, gyro_idx1);
-    
+    // 【关键】陀螺仪的Ceres参数估计过程
     ceres::CostFunction* cost_function =
       MultiPosGyroResidual<_T>::Create ( g_versor_pos0, g_versor_pos1, calib_gyro_samples_,
-                                         gyro_interval, gyro_dt_, optimize_gyro_bias_ );
+                                         gyro_interval, gyro_dt_, optimize_gyro_bias_ ); 
 
     problem.AddResidualBlock ( cost_function, NULL /* squared loss */, gyro_calib_params.data() ); 
       

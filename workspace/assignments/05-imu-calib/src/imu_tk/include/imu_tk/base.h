@@ -362,15 +362,23 @@ template <typename _T>
   return mean;
 }
 
+/**
+ * @brief 数据方差获取
+ * 
+ * @tparam _T 
+ * @param samples 
+ * @param interval 
+ * @return Eigen::Matrix< _T, 3, 1> 
+ */
 template <typename _T>
   Eigen::Matrix< _T, 3, 1> dataVariance( const std::vector< TriadData_<_T> >& samples, 
                                          const DataInterval& interval )
 {
-  DataInterval rev_interval =  checkInterval( samples, interval );
+  DataInterval rev_interval =  checkInterval( samples, interval ); 
   int n_samp = rev_interval.end_idx - rev_interval.start_idx + 1;
-  Eigen::Matrix< _T, 3, 1> mean = dataMean( samples, rev_interval );
+  Eigen::Matrix< _T, 3, 1> mean = dataMean( samples, rev_interval ); // 数据均值
   
-  Eigen::Matrix< _T, 3, 1> variance(0, 0, 0);
+  Eigen::Matrix< _T, 3, 1> variance(0, 0, 0); // 方差
   for( int i = rev_interval.start_idx; i <= rev_interval.end_idx; i++)
   {
     Eigen::Matrix< _T, 3, 1> diff = samples[i].data() - mean ;
@@ -381,6 +389,17 @@ template <typename _T>
   return variance;
 }
 
+/**
+ * @brief 提取间隔采样= 对应间隔中的数据
+ * 
+ * @tparam _T 
+ * @param samples 
+ * @param intervals 
+ * @param extracted_samples 
+ * @param extracted_intervals 
+ * @param interval_n_samps 
+ * @param only_means 
+ */
 template <typename _T>
   void extractIntervalsSamples ( const std::vector< TriadData_<_T> >& samples, 
                                  const std::vector< DataInterval >& intervals, 

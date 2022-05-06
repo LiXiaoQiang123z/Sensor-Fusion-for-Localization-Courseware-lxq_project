@@ -44,9 +44,13 @@ docker pull registry.cn-shanghai.aliyuncs.com/shenlanxueyuan/sensor-fusion-works
 
 **注意** Docker环境已包含**IMU TK**的全部依赖, 可直接编译+测试内参模型以及相应的标定结果. 
 
+****
+
 使用**本地环境**的同学:
 
 * 请参考[here](src/imu_tk/README.md), 自行完成环境配置
+
+****
 
 在**上侧**的Shell中, 输入如下命令, **编译imu_tk**
 
@@ -66,7 +70,7 @@ cd bin
 ./test_imu_calib test_data/xsens_acc.mat test_data/xsens_gyro.mat
 ```
 
-成功后, 可以看到如下的Shell Output & GNU Plot Visualization. 下图演示结果已将模型修改为下三角. 
+成功后, 可以看到如下的Shell Output & GNU Plot Visualization. 下图演示结果已将**模型修改为下三角.** 
 
 下面请搜索**TODO**, 将内参模型修改为下三角. **提交时需要明确指出对代码进行了怎样的修改. 仅复制粘贴下述示意图, 你将不会得到此题的分数**.
 

@@ -49,13 +49,13 @@ namespace imu_tk
  * T = [  mis_xz     1     -mis_zx  ]
  *     [ -mis_xy   mis_yx     1     ]
  * 
- * "body" frame spacial case:
+ * "body" frame spacial case: ||　上三角矩阵
  * 
  *     [  1     -mis_yz   mis_zy  ]
  * T = [  0        1     -mis_zx  ]
  *     [  0        0        1     ]
  * 
- * Scale matrix:
+ * Scale matrix:　|| 尺度 scale
  * 
  *     [  s_x      0        0  ]
  * K = [   0      s_y       0  ]
@@ -193,11 +193,11 @@ private:
   void update();
   
   /** @brief Misalignment matrix */
-  Eigen::Matrix< _T, 3 , 3> mis_mat_;
+  Eigen::Matrix< _T, 3 , 3> mis_mat_; // T
   /** @brief Scale matrix */
-  Eigen::Matrix< _T, 3 , 3> scale_mat_;
+  Eigen::Matrix< _T, 3 , 3> scale_mat_; // K
   /** @brief Bias vector */
-  Eigen::Matrix< _T, 3 , 1> bias_vec_;
+  Eigen::Matrix< _T, 3 , 1> bias_vec_; // B
   /** @brief Misalignment * scale matrix */
   Eigen::Matrix< _T, 3 , 3> ms_mat_;
 };
@@ -221,7 +221,7 @@ template <typename _T> std::ostream& operator<<(std::ostream& os,
  * In: Proceedings of the IEEE International Conference on Robotics and Automation (ICRA 2014), 
  * May 31 - June 7, 2014 Hong Kong, China, Page(s): 3042 - 3049 
  */
-template <typename _T> class MultiPosCalibration_
+template <typename _T> class MultiPosCalibration_  //多pos对齐：估计错位矩阵T、比例因子K、偏差B
 {
 public:
   
@@ -363,7 +363,7 @@ typedef MultiPosCalibration_<double> MultiPosCalibration;
 }
 
 /* Implementations */
-
+// 数据初始化：
 template <typename _T> 
   imu_tk::CalibratedTriad_<_T>::CalibratedTriad_( const _T &mis_yz, const _T &mis_zy, const _T &mis_zx, 
                                                 const _T &mis_xz, const _T &mis_xy, const _T &mis_yx, 

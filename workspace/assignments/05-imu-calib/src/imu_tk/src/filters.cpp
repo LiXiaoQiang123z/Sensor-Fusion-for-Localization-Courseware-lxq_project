@@ -30,13 +30,22 @@
 
 using namespace Eigen;
 
+/**
+ * @brief 静态间隔提取
+ * 
+ * @tparam _T 
+ * @param samples 
+ * @param threshold 
+ * @param intervals 
+ * @param win_size 
+ */
 template <typename _T> 
   void imu_tk::staticIntervalsDetector ( const std::vector< imu_tk::TriadData_<_T> >& samples, 
                                          _T threshold, std::vector< imu_tk::DataInterval >& intervals, 
                                          int win_size )
 {
-  if ( win_size < 11 ) win_size = 11;
-  if( !(win_size % 2) ) win_size++;
+  if ( win_size < 11 ) win_size = 11; // 最小值
+  if( !(win_size % 2) ) win_size++; // 奇偶
   
   int h = win_size / 2;
   
@@ -50,7 +59,7 @@ template <typename _T>
   
   for( int i = h; i < samples.size() - h; i++ )
   {
-    Matrix< _T, 3, 1> variance = dataVariance( samples, DataInterval( i - h, i + h) );
+    Matrix< _T, 3, 1> variance = dataVariance( samples, DataInterval( i - h, i + h) ); // 数据差异性
     _T norm = variance.norm();
     
     if( look_for_start )
