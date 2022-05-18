@@ -3,7 +3,8 @@ imu:
     gravity:
         x:  0.0
         y:  0.0
-        z: -9.81
+        # z: -9.81 # -9.794216
+        z: -9.794216 # -9.794216 TODO:
     bias:
         angular_velocity:
             x: 0.0

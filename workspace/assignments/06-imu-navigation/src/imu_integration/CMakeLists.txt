@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.10.2)
 project(imu_integration)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-SET(CMAKE_BUILD_TYPE "Release")
+# SET(CMAKE_BUILD_TYPE "Release")
+SET(CMAKE_BUILD_TYPE Debug)
 SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 add_compile_options(-std=c++11)
 add_definitions(-std=c++11)
@@ -186,6 +187,19 @@ target_link_libraries(generator_node
   ${catkin_LIBRARIES}
 )
 
+## evo imu data 
+# file(GLOB_RECURSE GENERATOR_ACTIVITY_SRCS "src/evo_imu/*.cpp")
+file(GLOB_RECURSE EVO_IMU_NODE_SRCS "src/evo_imu/node.cpp")
+# list(REMOVE_ITEM GENERATOR_ACTIVITY_SRCS ${GENERATOR_NODE_SRCS})
+
+add_executable(evo_imu_node 
+  ${EVO_IMU_NODE_SRCS}
+)
+target_link_libraries(evo_imu_node
+utils
+${ALL_TARGET_LIBRARIES}
+${catkin_LIBRARIES}
+)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -214,6 +228,7 @@ target_link_libraries(generator_node
 install(TARGETS 
       generator_node
       estimator_node
+      evo_imu_node
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

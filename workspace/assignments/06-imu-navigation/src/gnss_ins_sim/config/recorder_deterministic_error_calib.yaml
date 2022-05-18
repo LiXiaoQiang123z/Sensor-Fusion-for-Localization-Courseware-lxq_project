@@ -9,6 +9,6 @@ sample_frequency:
 # topic name:
 topic_name: /sim/sensor/imu
 # output rosbag path:
-output_path: /workspace/data/gnss_ins_sim/deterministic_error
+output_path: /home/lxq/dataset/catkin_multi/shnelan-multi-sensor-fusion/Sensor_multi_fusion_DEBUG/workspace-ch6/src/9_data/deterministic_error
 # output name:
 output_name: data.csv

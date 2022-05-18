@@ -20,11 +20,13 @@
 #include "imu_integration/subscriber/odom_subscriber.hpp"
 
 #include <nav_msgs/Odometry.h>
-
+// #include <iostream> // new
+// #include <fstream>
 namespace imu_integration {
 
 namespace estimator {
-
+    // new
+    // std::ofstream csv_data; // new
 class Activity {
   public:
     Activity(void);

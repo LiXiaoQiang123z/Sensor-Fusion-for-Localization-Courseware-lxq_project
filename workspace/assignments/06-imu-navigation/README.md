@@ -34,7 +34,7 @@ docker pull registry.cn-shanghai.aliyuncs.com/shenlanxueyuan/sensor-fusion-works
 
 ### 及格要求: 根据课程给定的数据, 完成基于中值法的解算
 
-本章参考框架, 基于VIO课程作业修改得到. 该实现相比优秀要求的GNSS-Ins-Sim, 对运动的自定义程度更高. 
+<u>**本章参考框架, 基于VIO课程作业修改得到**. 该实现相比优秀要求的GNSS-Ins-Sim, 对运动的自定义程度更高.</u> 
 
 在此再次对贺博&高博的优秀课程表示感谢! 
 
@@ -135,3 +135,8 @@ topics:      /sim/sensor/imu   360000 msgs    : sensor_msgs/Imu
 ```
 
 好, 提示就这么多了, 请志在优秀的你, 开始你的表演!
+
+
+
+
+

@@ -163,6 +163,7 @@ void Activity::AddNoise(double delta_t) {
     linear_acc_ += linear_acc_bias_ + linear_acc_noise;
 }
 
+
 void Activity::SetIMUMessage(void) {
     // a. set header:
     message_imu_.header.stamp = timestamp_;
@@ -174,14 +175,15 @@ void Activity::SetIMUMessage(void) {
     message_imu_.orientation.y = q.y();
     message_imu_.orientation.z = q.z();
     message_imu_.orientation.w = q.w();
-    // c. set angular velocity:
+    // c. set angular velocity: || w
     message_imu_.angular_velocity.x = angular_vel_.x(); 
     message_imu_.angular_velocity.y = angular_vel_.y(); 
     message_imu_.angular_velocity.z = angular_vel_.z();
-    // d. set linear acceleration:
+    // d. set linear acceleration: || acc
     message_imu_.linear_acceleration.x = linear_acc_.x(); 
     message_imu_.linear_acceleration.y = linear_acc_.y();
     message_imu_.linear_acceleration.z = linear_acc_.z();
+
 }
 
 void Activity::SetOdometryMessage(void) {
@@ -207,7 +209,18 @@ void Activity::SetOdometryMessage(void) {
     // d. set velocity:
     message_odom_.twist.twist.linear.x = v_gt_.x();
     message_odom_.twist.twist.linear.y = v_gt_.y();
-    message_odom_.twist.twist.linear.z = v_gt_.z(); 
+    message_odom_.twist.twist.linear.z = v_gt_.z();
+
+    // csv_data.precision(9);
+    // csv_data << timestamp_.toSec() << " ";
+    // csv_data.precision(5);
+    // csv_data << t_gt_(0) << " "
+    //          << t_gt_(1) << " "
+    //          << t_gt_(2) << " "
+    //          << q.x() << " "
+    //          << q.y() << " "
+    //          << q.z() << " "
+    //          << q.w() << std::endl;
 }
 
 void Activity::PublishMessages(void) {

@@ -36,7 +36,9 @@ void IMUSubscriber::msg_callback(
       imu_msg_ptr->angular_velocity.y,
       imu_msg_ptr->angular_velocity.z
     );
-
+    // LOG(INFO) << "imu \n"
+    //           << imu_data.linear_acceleration << " "
+    //           << imu_data.time << "" << std::endl;
     // add new message to buffer:
     imu_data_.push_back(imu_data);
     

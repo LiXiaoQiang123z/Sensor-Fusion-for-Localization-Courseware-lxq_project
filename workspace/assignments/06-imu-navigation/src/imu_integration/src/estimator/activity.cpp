@@ -8,10 +8,14 @@
 #include "imu_integration/estimator/activity.hpp"
 #include "glog/logging.h"
 
+#include <iostream> // new
+#include <fstream>
+
 namespace imu_integration {
 
 namespace estimator {
 
+// 构造函数： w acc，g 赋值操作
 Activity::Activity(void) 
     : private_nh_("~"), 
     initialized_(false),
@@ -23,9 +27,12 @@ Activity::Activity(void)
     linear_acc_bias_(0.0, 0.0, 0.0)
 {}
 
+// 初始化
 void Activity::Init(void) {
+    // param 参数获取
     // parse IMU config:
     private_nh_.param("imu/topic_name", imu_config_.topic_name, std::string("/sim/sensor/imu"));
+    // IMUSubscriber 订阅，接受imu的数据 ：1.时间戳 2.角速度 3.加速度 存入imu_data_中
     imu_sub_ptr_ = std::make_shared<IMUSubscriber>(private_nh_, imu_config_.topic_name, 1000000);
 
     // a. gravity constant:
@@ -61,12 +68,15 @@ void Activity::Init(void) {
     odom_estimation_pub_ = private_nh_.advertise<nav_msgs::Odometry>(odom_config_.topic_name.estimation, 500);
 }
 
+// 执行函数
 bool Activity::Run(void) {
+    // LOG(INFO)<<"1"<<std::endl;
     if (!ReadData())
         return false;
-
+// LOG(INFO)<<"2"<<std::endl;
     while(HasData()) {
-        if (UpdatePose()) {
+        if (UpdatePose()) { // 执行更新位姿
+        // LOG(INFO)<<"3"<<std::endl;
             PublishPose();
         }
     }
@@ -76,28 +86,29 @@ bool Activity::Run(void) {
 
 bool Activity::ReadData(void) {
     // fetch IMU measurements into buffer:
-    imu_sub_ptr_->ParseData(imu_data_buff_);
+    imu_sub_ptr_->ParseData(imu_data_buff_); //数据存入buff deque变量
 
     if (static_cast<size_t>(0) == imu_data_buff_.size())
         return false;
-
-    if (!initialized_) {
-        odom_ground_truth_sub_ptr->ParseData(odom_data_buff_);
-
+// LOG(INFO)<<"22"<<std::endl;
+    if (!initialized_) { // 第一次 or 其他
+        odom_ground_truth_sub_ptr->ParseData(odom_data_buff_); // 里程计：存真值
+// LOG(INFO)<<"3"<<std::endl;
         if (static_cast<size_t>(0) == odom_data_buff_.size())
             return false;
+// LOG(INFO)<<"4"<<std::endl;
     }
 
     return true;
 }
 
 bool Activity::HasData(void) {
-    if (imu_data_buff_.size() < static_cast<size_t>(3))
+    if (imu_data_buff_.size() < static_cast<size_t>(3)) // imu buff中存入了值
         return false;
 
     if (
         !initialized_ && 
-        static_cast<size_t>(0) == odom_data_buff_.size()
+        static_cast<size_t>(0) == odom_data_buff_.size() // readdata中里程计buff 存入了值
     ) {
         return false;
     }
@@ -105,10 +116,32 @@ bool Activity::HasData(void) {
     return true;
 }
 
+template <typename T>
+Eigen::Matrix<T, 3, 3> skew(Eigen::Matrix<T, 3, 1> &mat_in)
+{
+	Eigen::Matrix<T, 3, 3> skew_mat;
+	skew_mat.setZero();
+	skew_mat(0, 1) = -mat_in(2);
+	skew_mat(0, 2) = mat_in(1);
+	skew_mat(1, 2) = -mat_in(0);
+	skew_mat(1, 0) = mat_in(2);
+	skew_mat(2, 0) = -mat_in(1);
+	skew_mat(2, 1) = mat_in(0);
+	return skew_mat;
+};
+
+#define median_or_euler 0
+#define R_or_q 0
+/**
+ * @brief 【导航姿态结算 误差分析】
+ * 
+ * @return true 
+ * @return false 
+ */
 bool Activity::UpdatePose(void) {
-    if (!initialized_) {
+    if (!initialized_) { // 初始化：
         // use the latest measurement for initialization:
-        OdomData &odom_data = odom_data_buff_.back();
+        OdomData &odom_data = odom_data_buff_.back(); // last/new data
         IMUData imu_data = imu_data_buff_.back();
 
         pose_ = odom_data.pose;
@@ -120,26 +153,89 @@ bool Activity::UpdatePose(void) {
         imu_data_buff_.clear();
 
         // keep the latest IMU measurement for mid-value integration:
-        imu_data_buff_.push_back(imu_data);
+        imu_data_buff_.push_back(imu_data); // 为了中值积分
     } else {
         //
         // TODO: implement your estimation here
-        //
+#if R_or_q == 1
+    #if median_or_euler== 0
+        LOG(INFO) << "[median - 法]" << std::endl;
         // get deltas:
-
+        /* code */ // 【没有考虑bias等误差，需要再加上】【一些防御性判断条件等】
+        Eigen::Matrix3d pose_pre,pose_cur; 
+        pose_pre = pose_.block<3,3>(0,0);
+        IMUData imu0 = imu_data_buff_.at(0);
+        IMUData imu1 = imu_data_buff_.at(1);
+        double delta_time = imu1.time - imu0.time;
+        
         // update orientation:
-
+        Eigen::Vector3d theta = (imu0.angular_velocity + imu1.angular_velocity) / 2 * delta_time;
+        Eigen::Matrix3d delta_R = Eigen::Matrix3d::Identity() + sin(theta.norm()) / theta.norm() * skew(theta) + (1 - cos(theta.norm())) / (theta.norm() * theta.norm()) * skew(theta) * skew(theta);
+        pose_cur = pose_pre * delta_R;
+        pose_.block<3,3>(0,0) = pose_cur;
         // get velocity delta:
-
+        Eigen::Vector3d vel_pre,delta_v;
+        vel_pre = vel_;
+        delta_v =  (pose_cur * imu1.linear_acceleration +  pose_pre*imu0.linear_acceleration)/2 - G_ ;
+        vel_ = vel_pre + delta_v * delta_time;
         // update position:
-
+        Eigen::Vector3d tran_pre,tran_cur;
+        tran_pre = pose_.block<3,1>(0,3);
+        tran_cur = tran_pre + vel_pre*delta_time + delta_v * delta_time * delta_time / 2; 
+        pose_.block<3,1>(0,3) = tran_cur;
+        // move forward --
+    #elif median_or_euler==1
+        LOG(INFO) << "[euler - 法]" << std::endl;
+        // get deltas:
+        Eigen::Matrix3d pose_pre,pose_cur;
+        pose_pre = pose_.block<3,3>(0,0);
+        IMUData imu0 = imu_data_buff_.at(0);
+        IMUData imu1 = imu_data_buff_.at(1);
+        double delta_time = imu1.time - imu0.time;
+        // update orientation:
+        Eigen::Vector3d theta = imu0.angular_velocity  * delta_time;
+        Eigen::Matrix3d delta_R = Eigen::Matrix3d::Identity() + sin(theta.norm()) / theta.norm() * skew(theta) + (1 - cos(theta.norm())) / (theta.norm() * theta.norm()) * skew(theta) * skew(theta);
+        pose_cur = pose_pre * delta_R;
+        pose_.block<3,3>(0,0) = pose_cur;
+        // get velocity delta:
+        Eigen::Vector3d vel_pre,delta_v;
+        vel_pre = vel_;
+        delta_v = pose_pre*imu0.linear_acceleration - G_ ;
+        vel_ = vel_pre + delta_v * delta_time;
+        // update position:
+        Eigen::Vector3d tran_pre,tran_cur;
+        tran_pre = pose_.block<3,1>(0,3);
+        tran_cur = tran_pre + vel_pre*delta_time + delta_v * delta_time * delta_time / 2; 
+        pose_.block<3,1>(0,3) = tran_cur;
         // move forward -- 
+    #endif
+#elif R_or_q == 0
+        // 每太注意，写完，才发现后面还有函数调用：【函数版本：简便很多了】
+        Eigen::Matrix3d pose_pre,pose_cur;
+        Eigen::Vector3d delta_q;
+
+        if( !GetAngularDelta(1,0,delta_q) ){
+            LOG(INFO)<< "GetAngularDelta  ERROR! "<<std::endl;
+            return false;
+        }
+        UpdateOrientation(delta_q,pose_cur,pose_pre);
+
+        Eigen::Vector3d delta_v;
+        double delta_time;
+        if( !GetVelocityDelta(1,0,pose_cur,pose_pre,delta_time,delta_v) ){
+            LOG(INFO)<< "delta_v  ERROR! "<<std::endl;
+            return false;
+        }
+        UpdatePosition( delta_time, delta_v);
+
+#endif
         // NOTE: this is NOT fixed. you should update your buffer according to the method of your choice:
         imu_data_buff_.pop_front();
     }
     
     return true;
 }
+
 
 bool Activity::PublishPose() {
     // a. set header:
@@ -223,8 +319,11 @@ bool Activity::GetAngularDelta(
     Eigen::Vector3d angular_vel_curr = GetUnbiasedAngularVel(imu_data_curr.angular_velocity);
     Eigen::Vector3d angular_vel_prev = GetUnbiasedAngularVel(imu_data_prev.angular_velocity);
 
+#if median_or_euler == 0
     angular_delta = 0.5*delta_t*(angular_vel_curr + angular_vel_prev);
-
+#elif median_or_euler == 1
+    angular_delta = delta_t * angular_vel_prev;
+#endif
     return true;
 }
 
@@ -259,8 +358,12 @@ bool Activity::GetVelocityDelta(
 
     Eigen::Vector3d linear_acc_curr = GetUnbiasedLinearAcc(imu_data_curr.linear_acceleration, R_curr);
     Eigen::Vector3d linear_acc_prev = GetUnbiasedLinearAcc(imu_data_prev.linear_acceleration, R_prev);
-    
-    velocity_delta = 0.5*delta_t*(linear_acc_curr + linear_acc_prev);
+
+#if median_or_euler == 0
+    velocity_delta = 0.5 * delta_t * (linear_acc_curr + linear_acc_prev); // 速度更新量
+#elif median_or_euler == 1
+    velocity_delta = delta_t * linear_acc_prev;
+#endif
 
     return true;
 }
@@ -280,11 +383,11 @@ void Activity::UpdateOrientation(
     // TODO: this could be a helper routine for your own implementation
     //
     // magnitude:
-    double angular_delta_mag = angular_delta.norm();
+    double angular_delta_mag = angular_delta.norm(); //大小
     // direction:
-    Eigen::Vector3d angular_delta_dir = angular_delta.normalized();
+    Eigen::Vector3d angular_delta_dir = angular_delta.normalized(); //归一化
 
-    // build delta q:
+    // build delta q: || 旋转向量转换成四元数
     double angular_delta_cos = cos(angular_delta_mag/2.0);
     double angular_delta_sin = sin(angular_delta_mag/2.0);
     Eigen::Quaterniond dq(
@@ -295,13 +398,13 @@ void Activity::UpdateOrientation(
     );
     Eigen::Quaterniond q(pose_.block<3, 3>(0, 0));
     
-    // update:
+    // update: || 基于四元数的更新
     q = q*dq;
     
     // write back:
-    R_prev = pose_.block<3, 3>(0, 0);
+    R_prev = pose_.block<3, 3>(0, 0); // 上一次的旋转 R
     pose_.block<3, 3>(0, 0) = q.normalized().toRotationMatrix();
-    R_curr = pose_.block<3, 3>(0, 0);
+    R_curr = pose_.block<3, 3>(0, 0); // 更新之后的旋转 R
 }
 
 /**
@@ -314,8 +417,8 @@ void Activity::UpdatePosition(const double &delta_t, const Eigen::Vector3d &velo
     //
     // TODO: this could be a helper routine for your own implementation
     //
-    pose_.block<3, 1>(0, 3) += delta_t*vel_ + 0.5*delta_t*velocity_delta;
-    vel_ += velocity_delta;
+    pose_.block<3, 1>(0, 3) += delta_t*vel_ + 0.5*delta_t*velocity_delta; // 位置
+    vel_ += velocity_delta; // 速度
 }
 
 

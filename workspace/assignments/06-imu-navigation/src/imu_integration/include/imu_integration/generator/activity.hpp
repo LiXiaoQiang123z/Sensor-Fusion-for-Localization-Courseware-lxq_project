@@ -20,9 +20,14 @@
 
 #include "imu_integration/config/config.hpp"
 
+#include <iostream> // new
+#include <fstream>
+
 namespace imu_integration {
 
 namespace generator {
+    // new
+    std::ofstream csv_data; // new
 
 class Activity {
 public:
@@ -77,6 +82,7 @@ private:
     // ROS IMU message:
     sensor_msgs::Imu message_imu_;
     nav_msgs::Odometry message_odom_;
+
 };
 
 }  // namespace generator
