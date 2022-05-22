@@ -84,7 +84,7 @@ private:
   // indices:
   static constexpr int kDimState{15};
 
-  static constexpr int kIndexErrorPos{0};
+  static constexpr int kIndexErrorPos{0}; // 
   static constexpr int kIndexErrorVel{3};
   static constexpr int kIndexErrorOri{6};
   static constexpr int kIndexErrorAccel{9};
@@ -273,20 +273,20 @@ private:
   // odometry estimation from IMU integration:
   Eigen::Matrix4d init_pose_ = Eigen::Matrix4d::Identity();
 
-  Eigen::Matrix4d pose_ = Eigen::Matrix4d::Identity();
-  Eigen::Vector3d vel_ = Eigen::Vector3d::Zero();
-  Eigen::Vector3d gyro_bias_ = Eigen::Vector3d::Zero();
+  Eigen::Matrix4d pose_ = Eigen::Matrix4d::Identity(); // PQ
+  Eigen::Vector3d vel_ = Eigen::Vector3d::Zero(); //V
+  Eigen::Vector3d gyro_bias_ = Eigen::Vector3d::Zero(); // bias
   Eigen::Vector3d accl_bias_ = Eigen::Vector3d::Zero();
 
   // state:
-  VectorX X_ = VectorX::Zero();
+  VectorX X_ = VectorX::Zero(); // delta_x^^_k 
   MatrixP P_ = MatrixP::Zero();
   // process & measurement equations:
-  MatrixF F_ = MatrixF::Zero();
+  MatrixF F_ = MatrixF::Zero(); //
   MatrixB B_ = MatrixB::Zero();
   MatrixQ Q_ = MatrixQ::Zero();
 
-  MatrixGPose GPose_ = MatrixGPose::Zero();
+  MatrixGPose GPose_ = MatrixGPose::Zero(); // 
   MatrixCPose CPose_ = MatrixCPose::Zero();
   MatrixRPose RPose_ = MatrixRPose::Zero();
   MatrixQPose QPose_ = MatrixQPose::Zero();

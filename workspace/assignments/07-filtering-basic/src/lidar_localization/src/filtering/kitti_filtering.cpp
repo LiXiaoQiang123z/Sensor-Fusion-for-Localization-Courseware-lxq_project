@@ -56,6 +56,7 @@ bool KITTIFiltering::Init(const Eigen::Matrix4f &init_pose,
   return false;
 }
 
+// 更新定位
 bool KITTIFiltering::Update(const IMUData &imu_data) {
   if (kalman_filter_ptr_->Update(imu_data)) {
     kalman_filter_ptr_->GetOdometry(current_pose_, current_vel_);
@@ -64,7 +65,7 @@ bool KITTIFiltering::Update(const IMUData &imu_data) {
 
   return false;
 }
-
+// 正确？ 矫正？？？ 
 bool KITTIFiltering::Correct(const IMUData &imu_data,
                              const CloudData &cloud_data,
                              const PosVelData &pos_vel_data,
@@ -88,17 +89,17 @@ bool KITTIFiltering::Correct(const IMUData &imu_data,
 
   // matching:
   CloudData::CLOUD_PTR result_cloud_ptr(new CloudData::CLOUD());
-  registration_ptr_->ScanMatch(filtered_cloud_ptr, predict_pose,
+  registration_ptr_->ScanMatch(filtered_cloud_ptr, predict_pose, // NDT匹配
                                result_cloud_ptr, cloud_pose);
   pcl::transformPointCloud(*cloud_data.cloud_ptr, *current_scan_ptr_,
-                           cloud_pose);
+                           cloud_pose); // curClooud to local map ：
 
   // update predicted pose:
-  step_pose = last_pose.inverse() * cloud_pose;
-  predict_pose = cloud_pose * step_pose;
+  step_pose = last_pose.inverse() * cloud_pose; // 上上帧 和 上一帧的相对位姿
+  predict_pose = cloud_pose * step_pose; // 当前帧位姿 = 上一帧位姿 * step_pose(相对位姿)
   last_pose = cloud_pose;
 
-  // shall the local map be updated:
+  // shall the local map be updated: || 更新本地地图
   std::vector<float> edge = local_map_segmenter_ptr_->GetEdge();
   for (int i = 0; i < 3; i++) {
     if (fabs(cloud_pose(i, 3) - edge.at(2 * i)) > 50.0 &&
@@ -106,20 +107,20 @@ bool KITTIFiltering::Correct(const IMUData &imu_data,
       continue;
     }
 
-    ResetLocalMap(cloud_pose(0, 3), cloud_pose(1, 3), cloud_pose(2, 3));
+    ResetLocalMap(cloud_pose(0, 3), cloud_pose(1, 3), cloud_pose(2, 3)); 
     break;
   }
 
   // set lidar measurement:
   current_measurement_.time = cloud_data.time;
-  current_measurement_.T_nb =
+  current_measurement_.T_nb = // b代表body=载体自身坐标系
       (init_pose_.inverse() * cloud_pose).cast<double>();
   current_measurement_.v_b = pos_vel_data.vel.cast<double>();
   current_measurement_.w_b =
       Eigen::Vector3d(imu_data.angular_velocity.x, imu_data.angular_velocity.y,
                       imu_data.angular_velocity.z);
 
-  // Kalman correction:
+  // Kalman correction: || 卡尔曼矫正 
   if (kalman_filter_ptr_->Correct(imu_data, KalmanFilter::MeasurementType::POSE,
                                   current_measurement_)) {
     kalman_filter_ptr_->GetOdometry(current_pose_, current_vel_);
@@ -129,6 +130,7 @@ bool KITTIFiltering::Correct(const IMUData &imu_data,
 
   return false;
 }
+
 
 void KITTIFiltering::GetGlobalMap(CloudData::CLOUD_PTR &global_map) {
   // downsample global map for visualization:
@@ -318,14 +320,15 @@ bool KITTIFiltering::SetInitPose(const Eigen::Matrix4f &init_pose) {
   return true;
 }
 
+// 更新本地地图
 bool KITTIFiltering::ResetLocalMap(float x, float y, float z) {
   std::vector<float> origin = {x, y, z};
 
-  // segment local map from global map:
-  local_map_segmenter_ptr_->SetOrigin(origin);
+  // segment local map from global map: || 从全局地图，分割局部地图
+  local_map_segmenter_ptr_->SetOrigin(origin); // 设置坐标原点
   local_map_segmenter_ptr_->Filter(global_map_ptr_, local_map_ptr_);
 
-  registration_ptr_->SetInputTarget(local_map_ptr_);
+  registration_ptr_->SetInputTarget(local_map_ptr_); // 输入局部地图
 
   has_new_local_map_ = true;
 

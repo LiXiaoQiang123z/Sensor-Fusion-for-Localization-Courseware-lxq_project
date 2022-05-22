@@ -16,9 +16,10 @@ bool lidar_localization::GNSSData::origin_position_inited = false;
 GeographicLib::LocalCartesian lidar_localization::GNSSData::geo_converter;
 
 namespace lidar_localization {
+    // 初始化坐标原点
 void GNSSData::InitOriginPosition() {
-    geo_converter.Reset(latitude, longitude, altitude);
-
+    // geo_converter.Reset(latitude, longitude, altitude);
+    geo_converter.Reset(48.9826506625, 8.39044984163, 116.395850034); // 点云初始位姿
     origin_latitude = latitude;
     origin_longitude = longitude;
     origin_altitude = altitude;

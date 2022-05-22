@@ -1,0 +1,4 @@
+find_package(fmt REQUIRED)
+set(FMT_LIBRARIES fmt::fmt)
+
+list(APPEND ALL_TARGET_LIBRARIES ${FMT_LIBRARIES})

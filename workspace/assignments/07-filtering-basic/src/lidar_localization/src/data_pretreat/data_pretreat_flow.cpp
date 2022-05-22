@@ -9,6 +9,7 @@
 #include "lidar_localization/global_defination/global_defination.h"
 
 namespace lidar_localization {
+    // 数据预处理： 
 DataPretreatFlow::DataPretreatFlow(ros::NodeHandle& nh, std::string cloud_topic) {
     // subscribers:
     // a. velodyne measurement:
@@ -31,6 +32,7 @@ DataPretreatFlow::DataPretreatFlow(ros::NodeHandle& nh, std::string cloud_topic)
     distortion_adjust_ptr_ = std::make_shared<DistortionAdjust>();
 }
 
+    // 数据预处理
 bool DataPretreatFlow::Run() {
     if (!ReadData())
         return false;
@@ -67,7 +69,7 @@ bool DataPretreatFlow::ReadData() {
         return false;
 
     // use timestamp of lidar measurement as reference:
-    double cloud_time = cloud_data_buff_.front().time;
+    double cloud_time = cloud_data_buff_.front().time; // 以雷达时间戳为中心对齐 
     // sync IMU, velocity and GNSS with lidar measurement:
     // find the two closest measurement around lidar measurement time
     // then use linear interpolation to generate synced measurement:
@@ -78,7 +80,7 @@ bool DataPretreatFlow::ReadData() {
     // only mark lidar as 'inited' when all the three sensors are synced:
     static bool sensor_inited = false;
     if (!sensor_inited) {
-        if (!valid_imu || !valid_velocity || !valid_gnss) {
+        if (!valid_imu || !valid_velocity || !valid_gnss) { // 初始化成功判定
             cloud_data_buff_.pop_front();
             return false;
         }
@@ -88,6 +90,7 @@ bool DataPretreatFlow::ReadData() {
     return true;
 }
 
+    // Ti_l ： lidar to imu 变换矩阵
 bool DataPretreatFlow::InitCalibration() {
     // lookup imu pose in lidar frame:
     static bool calibration_received = false;
@@ -100,6 +103,7 @@ bool DataPretreatFlow::InitCalibration() {
     return calibration_received;
 }
 
+    // gnss 初始化
 bool DataPretreatFlow::InitGNSS() {
     static bool gnss_inited = false;
     if (!gnss_inited) {
@@ -111,6 +115,7 @@ bool DataPretreatFlow::InitGNSS() {
     return gnss_inited;
 }
 
+    // 数据判断有无
 bool DataPretreatFlow::HasData() {
     if (cloud_data_buff_.size() == 0)
         return false;
@@ -124,6 +129,7 @@ bool DataPretreatFlow::HasData() {
     return true;
 }
 
+    // 有效数据： 当前据对齐【检查一遍？？？】
 bool DataPretreatFlow::ValidData() {
     current_cloud_data_ = cloud_data_buff_.front();
     current_imu_data_ = imu_data_buff_.front();
@@ -164,6 +170,7 @@ bool DataPretreatFlow::ValidData() {
     return true;
 }
 
+    // 变换数据： gt data transform to Lidar || pos&vel || 
 bool DataPretreatFlow::TransformData() {
     // a. get reference pose:
     gnss_pose_ = Eigen::Matrix4f::Identity();
@@ -187,13 +194,14 @@ bool DataPretreatFlow::TransformData() {
     pos_vel_.vel.z() = current_velocity_data_.linear_velocity.z;
 
     // c. motion compensation for lidar measurements:
-    current_velocity_data_.TransformCoordinate(lidar_to_imu_);
-    distortion_adjust_ptr_->SetMotionInfo(0.1, current_velocity_data_);
-    distortion_adjust_ptr_->AdjustCloud(current_cloud_data_.cloud_ptr, current_cloud_data_.cloud_ptr);
+    current_velocity_data_.TransformCoordinate(lidar_to_imu_); // 转换到lidar坐标系
+    distortion_adjust_ptr_->SetMotionInfo(0.1, current_velocity_data_); // 读取 权重？|w v 的信息
+    distortion_adjust_ptr_->AdjustCloud(current_cloud_data_.cloud_ptr, current_cloud_data_.cloud_ptr); // 点云去畸变
 
     return true;
 }
 
+    // 发布数据： 点云、imu、pos&vel、gnss
 bool DataPretreatFlow::PublishData() {
     cloud_pub_ptr_->Publish(current_cloud_data_.cloud_ptr, current_cloud_data_.time);
     imu_pub_ptr_->Publish(current_imu_data_, current_cloud_data_.time);

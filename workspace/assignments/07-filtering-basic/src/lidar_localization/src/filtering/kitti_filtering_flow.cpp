@@ -15,6 +15,7 @@
 
 namespace lidar_localization {
 
+  // 滤波-构造函数： 还用到imu的原始测量？？？ 针对不考虑随机游走？？？】
 KITTIFilteringFlow::KITTIFilteringFlow(ros::NodeHandle &nh) {
   // subscriber:
   // a. IMU raw measurement:
@@ -59,6 +60,7 @@ KITTIFilteringFlow::KITTIFilteringFlow(ros::NodeHandle &nh) {
   filtering_ptr_ = std::make_shared<KITTIFiltering>();
 }
 
+  // 滤波的执行过程：
 bool KITTIFilteringFlow::Run() {
   if (!InitCalibration()) {
     return false;
@@ -74,7 +76,7 @@ bool KITTIFilteringFlow::Run() {
   while (HasData()) {
     if (!HasInited()) {
       if (ValidLidarData()) {
-        InitLocalization();
+        InitLocalization(); // 定位-init
       }
     } else {
       // handle timestamp chaos in an more elegant way
@@ -82,7 +84,7 @@ bool KITTIFilteringFlow::Run() {
         if (HasIMUData()) {
           while (HasIMUData() && ValidIMUData() &&
                  current_imu_raw_data_.time < current_cloud_data_.time) {
-            UpdateLocalization();
+            UpdateLocalization(); // lidar数据的 - 更新定位
           }
 
           if (current_imu_raw_data_.time >= current_cloud_data_.time) {
@@ -90,11 +92,11 @@ bool KITTIFilteringFlow::Run() {
           }
         }
 
-        CorrectLocalization();
+        CorrectLocalization(); // 正确的定位？？ 矫正 or 验证
       }
 
       if (HasIMUData() && ValidIMUData()) {
-        UpdateLocalization();
+        UpdateLocalization(); // imu数据的- 更新定位
       }
     }
   }
@@ -154,11 +156,12 @@ bool KITTIFilteringFlow::SaveOdometry(void) {
   return true;
 }
 
+  // 读取数据
 bool KITTIFilteringFlow::ReadData() {
   //
   // pipe raw IMU measurements into buffer:
   //
-  imu_raw_sub_ptr_->ParseData(imu_raw_data_buff_);
+  imu_raw_sub_ptr_->ParseData(imu_raw_data_buff_); // imu的原始数据
   while (HasInited() && HasIMUData() &&
          imu_raw_data_buff_.front().time < filtering_ptr_->GetTime()) {
     imu_raw_data_buff_.pop_front();
@@ -190,7 +193,7 @@ bool KITTIFilteringFlow::HasData() {
 
   return true;
 }
-
+  // 是否有效
 bool KITTIFilteringFlow::ValidIMUData() {
   current_imu_raw_data_ = imu_raw_data_buff_.front();
 
@@ -198,7 +201,7 @@ bool KITTIFilteringFlow::ValidIMUData() {
 
   return true;
 }
-
+  // lidar 数据
 bool KITTIFilteringFlow::ValidLidarData() {
   current_cloud_data_ = cloud_data_buff_.front();
   current_imu_synced_data_ = imu_synced_data_buff_.front();
@@ -230,7 +233,7 @@ bool KITTIFilteringFlow::ValidLidarData() {
 
   return true;
 }
-
+  // 对齐矩阵
 bool KITTIFilteringFlow::InitCalibration() {
   // lookup imu pose in lidar frame:
   static bool calibration_received = false;
@@ -258,6 +261,7 @@ bool KITTIFilteringFlow::InitLocalization(void) {
   return true;
 }
 
+// 更新定位
 bool KITTIFilteringFlow::UpdateLocalization() {
   if (filtering_ptr_->Update(current_imu_raw_data_)) {
     PublishFusionOdom();
@@ -267,9 +271,10 @@ bool KITTIFilteringFlow::UpdateLocalization() {
   return false;
 }
 
+// 正确的定位？？： 
 bool KITTIFilteringFlow::CorrectLocalization() {
   bool is_fusion_succeeded =
-      filtering_ptr_->Correct(current_imu_synced_data_, current_cloud_data_,
+      filtering_ptr_->Correct(current_imu_synced_data_, current_cloud_data_, // 同步后的imu、lader、pos&vel、pose
                               current_pos_vel_data_, laser_pose_);
   PublishLidarOdom();
 
@@ -318,6 +323,8 @@ bool KITTIFilteringFlow::PublishLidarOdom() {
   return true;
 }
 
+
+  // 发布融合里程计
 bool KITTIFilteringFlow::PublishFusionOdom() {
   // get odometry from Kalman filter:
   filtering_ptr_->GetOdometry(fused_pose_, fused_vel_);
@@ -330,6 +337,7 @@ bool KITTIFilteringFlow::PublishFusionOdom() {
   return true;
 }
 
+// 更新里程计
 bool KITTIFilteringFlow::UpdateOdometry(const double &time) {
   trajectory.time_.push_back(time);
 

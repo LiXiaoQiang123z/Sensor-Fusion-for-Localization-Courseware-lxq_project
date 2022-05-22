@@ -120,7 +120,7 @@ bool ScanContextManager::DetectLoopClosure(
     RingKey query_ring_key = GetRingKey(query_scan_context);
 
     // get proposal:
-    std::pair<int, float> proposal = GetLoopClosureMatch(
+    std::pair<int, float> proposal = GetLoopClosureMatch( // 循环闭合匹配
         query_scan_context, query_ring_key
     );
 

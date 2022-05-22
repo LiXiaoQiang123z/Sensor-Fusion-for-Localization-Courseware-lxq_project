@@ -7,12 +7,14 @@
 #include "glog/logging.h"
 
 namespace lidar_localization {
+    // 设置运动信息
 void DistortionAdjust::SetMotionInfo(float scan_period, VelocityData velocity_data) {
     scan_period_ = scan_period;
     velocity_ << velocity_data.linear_velocity.x, velocity_data.linear_velocity.y, velocity_data.linear_velocity.z;
     angular_rate_ << velocity_data.angular_velocity.x, velocity_data.angular_velocity.y, velocity_data.angular_velocity.z;
 }
 
+    // 调整点云：点云去畸变【仅限于 kitti2bag 转换的bag包】
 bool DistortionAdjust::AdjustCloud(CloudData::CLOUD_PTR& input_cloud_ptr, CloudData::CLOUD_PTR& output_cloud_ptr) {
     CloudData::CLOUD_PTR origin_cloud_ptr(new CloudData::CLOUD(*input_cloud_ptr));
     output_cloud_ptr.reset(new CloudData::CLOUD());

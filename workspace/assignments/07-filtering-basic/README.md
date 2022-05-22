@@ -73,7 +73,7 @@ rosbag play kitti_lidar_only_2011_10_03_drive_0027_synced.bag
 请搜索TODO, 开始你的编码 :P. 此处将完成作业相关的配置汇总如下. 所有的改动仅需在如下三个文件中进行:
 
 * **Hyper Params** [here](src/lidar_localization/config/filtering/kitti_filtering.yaml#L109)
-    
+  
     * 地图以及Scan Context Data输入路径
     
     * ESKF / IEKF参数配置
@@ -103,6 +103,8 @@ evo_ape kitti ground_truth.txt laser.txt -r full --plot --plot_mode xy
 # b. fused:
 evo_ape kitti ground_truth.txt fused.txt -r full --plot --plot_mode xy
 ```
+
+
 
 ### 优秀要求: 在前面的模型推导中, 考虑了器件误差中的随机游走, 请给出不考虑随机游走模型时的推导过程，并在工程框架中实现。对比这两种方法的性能差异(最好给出原因分析)。另外，kalman滤波的性能对噪声的设置较为敏感，请在提供结果的同时，给出不同噪声设置情况下的结果对比(至少5组参数)
 

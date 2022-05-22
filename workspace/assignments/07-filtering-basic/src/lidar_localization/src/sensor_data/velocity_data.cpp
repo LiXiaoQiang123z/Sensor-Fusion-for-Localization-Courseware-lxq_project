@@ -51,6 +51,7 @@ bool VelocityData::SyncData(std::deque<VelocityData>& UnsyncedData, std::deque<V
     return true;
 }
 
+    // 转换坐标
 void VelocityData::TransformCoordinate(Eigen::Matrix4f transform_matrix) {
     Eigen::Matrix4d matrix = transform_matrix.cast<double>();
 
@@ -66,9 +67,9 @@ void VelocityData::TransformCoordinate(Eigen::Matrix4f transform_matrix) {
     delta_v(0) = w(1) * t(2) - w(2) * t(1);
     delta_v(1) = w(2) * t(0) - w(0) * t(2);
     delta_v(2) = w(0) * t(1) - w(1) * t(0);
-    v += delta_v;
+    v += delta_v; // v = v + w x r
 
-    // b. transform velocities in IMU frame to lidar frame:
+    // b. transform velocities in IMU frame to lidar frame: // 转换到Lidar坐标系
     w = R.transpose() * w;
     v = R.transpose() * v;
 

@@ -48,6 +48,7 @@ bool NDTRegistration::SetInputTarget(const CloudData::CLOUD_PTR& input_target) {
     return true;
 }
 
+// NDT匹配： 输入点云 + 目标点云 ； 对齐 ； 获得位姿
 bool NDTRegistration::ScanMatch(const CloudData::CLOUD_PTR& input_source, 
                                 const Eigen::Matrix4f& predict_pose, 
                                 CloudData::CLOUD_PTR& result_cloud_ptr,

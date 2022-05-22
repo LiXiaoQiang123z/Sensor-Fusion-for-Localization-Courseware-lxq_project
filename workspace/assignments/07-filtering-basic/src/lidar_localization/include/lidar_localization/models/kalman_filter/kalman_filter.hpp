@@ -178,6 +178,8 @@ protected:
   } observability;
 
   // hyper-params:
+  //【new】
+  bool random_walk_flag = true;
   // a. earth constants:
   struct {
     double GRAVITY_MAGNITUDE;
