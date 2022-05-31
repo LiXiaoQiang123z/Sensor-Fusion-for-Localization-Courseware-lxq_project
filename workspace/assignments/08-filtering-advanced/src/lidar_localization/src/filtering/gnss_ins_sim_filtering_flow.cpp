@@ -70,7 +70,6 @@ bool GNSSINSSimFilteringFlow::Run() {
                         imu_data_buff_.push_back(current_imu_data_);
                     }
                 }
-
                 CorrectLocalization();
             }
            
@@ -82,6 +81,8 @@ bool GNSSINSSimFilteringFlow::Run() {
 
     return true;
 }
+
+
 
 bool GNSSINSSimFilteringFlow::SaveOdometry(void) {
     if ( 0 == trajectory.N ) {
@@ -122,6 +123,7 @@ bool GNSSINSSimFilteringFlow::SaveOdometry(void) {
 
     return true;
 }
+
 
 bool GNSSINSSimFilteringFlow::SaveObservabilityAnalysis(void) {
     filtering_ptr_->SaveObservabilityAnalysis();

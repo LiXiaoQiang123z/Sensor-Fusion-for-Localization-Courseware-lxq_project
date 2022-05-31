@@ -1,5 +1,5 @@
 # 全局地图
-map_path: /workspace/assignments/08-filtering-advanced/src/lidar_localization/slam_data/map/filtered_map.pcd
+map_path: /home/lxq/dataset/catkin_multi/shnelan-multi-sensor-fusion/Sensor_multi_fusion_DEBUG/workspace-ch8/src/lidar_localization/slam_data/map/filtered_map.pcd
 global_map_filter: voxel_filter # 选择滑窗地图点云滤波方法，目前支持：voxel_filter、no_filter
 
 # 局部地图
@@ -15,7 +15,7 @@ current_scan_filter: voxel_filter # 选择当前帧点云滤波方法，目前�
 
 # loop closure for localization initialization/re-initialization:
 loop_closure_method: scan_context # 选择回环检测方法, 目前支持scan_context
-scan_context_path: /workspace/assignments/08-filtering-advanced/src/lidar_localization/slam_data/scan_context   
+scan_context_path: /home/lxq/dataset/catkin_multi/shnelan-multi-sensor-fusion/Sensor_multi_fusion_DEBUG/workspace-ch8/src/lidar_localization/slam_data/scan_context   
 
 # 匹配
 registration_method: NDT   # 选择点云匹配方法，目前支持：NDT 
@@ -68,11 +68,13 @@ NDT:
 error_state_kalman_filter:
     earth:
         # gravity can be calculated from https://www.sensorsone.com/local-gravity-calculator/ using latitude and height:
-        gravity_magnitude: 9.80943
+        # gravity_magnitude: 9.80943 
+        gravity_magnitude: 9.805334
         # rotation speed, rad/s:
         rotation_speed: 7.292115e-5
         # latitude:
-        latitude:   48.9827703173
+        # latitude:   48.9827703173  # 这个只是输出打印下，没啥用。所以不改也没的问题
+        latitude: 48.982531
     covariance:
         prior:
             pos: 1.0e-6
@@ -80,17 +82,31 @@ error_state_kalman_filter:
             ori: 1.0e-6
             epsilon: 1.0e-6
             delta: 1.0e-6
-        process:
+        process: # Q:过程噪声 
             gyro: 1.0e-4
             accel: 2.5e-3
             bias_accel: 2.5e-3
             bias_gyro: 1.0e-4
-        measurement:
+        # measurement: # R 观测噪声
+        #     pose:
+        #         pos: 1.0e-4
+        #         ori: 1.0e-4
+        #     pos: 1.0e-4  # 默认参数
+        #     vel: 2.5e-3
+
+        measurement: # pose_vel R 观测噪声[2.增大观测的权重]
             pose:
-                pos: 1.0e-4
-                ori: 1.0e-4
-            pos: 1.0e-4
-            vel: 2.5e-3
+                pos: 1.0e-5 # 不动
+                ori: 1.0e-5
+            pos: 1.0e-4 
+            vel: 2.5e-1 #vel -动这个
+
+        # measurement: # posi
+        #     pose:
+        #         pos: 1.0e-4
+        #         ori: 1.0e-4
+        #     pos: 2.5e-1 # 1.0-4
+        #     vel: 2.5e-3
     motion_constraint: 
         activated: true
         w_b_thresh: 0.13

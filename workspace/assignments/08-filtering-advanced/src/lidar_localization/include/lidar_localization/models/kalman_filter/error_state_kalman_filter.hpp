@@ -313,7 +313,7 @@ private:
   // odometry estimation from IMU integration:
   Eigen::Matrix4d init_pose_ = Eigen::Matrix4d::Identity();
 
-  Eigen::Matrix4d pose_ = Eigen::Matrix4d::Identity();
+  Eigen::Matrix4d pose_ = Eigen::Matrix4d::Identity(); // pq+v+bias || 名义值
   Eigen::Vector3d vel_ = Eigen::Vector3d::Zero();
   Eigen::Vector3d gyro_bias_ = Eigen::Vector3d::Zero();
   Eigen::Vector3d accl_bias_ = Eigen::Vector3d::Zero();

@@ -58,6 +58,7 @@ include(cmake/geographic.cmake)
 include(cmake/protobuf.cmake)
 include(cmake/PCL.cmake)
 include(cmake/sophus.cmake)
+include(cmake/fmt.cmake)
 include(cmake/g2o.cmake)
 
 include_directories(include ${catkin_INCLUDE_DIRS})

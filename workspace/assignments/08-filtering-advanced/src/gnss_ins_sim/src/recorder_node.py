@@ -581,6 +581,8 @@ def get_gnss_ins_sim(
             odo_msg,
             reference_pose_msg
         )
+    sim.results() # new
+    sim.plot(['ref_pos', 'ref_vel'], opt={'ref_pos': '3d'})
 
 
 def gnss_ins_sim_recorder():

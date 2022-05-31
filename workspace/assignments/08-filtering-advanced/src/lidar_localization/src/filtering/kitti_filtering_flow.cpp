@@ -98,6 +98,7 @@ bool KITTIFilteringFlow::Run() {
     return true;
 }
 
+#define save_vel_body
 bool KITTIFilteringFlow::SaveOdometry(void) {
     if ( 0 == trajectory.N ) {
         return false;

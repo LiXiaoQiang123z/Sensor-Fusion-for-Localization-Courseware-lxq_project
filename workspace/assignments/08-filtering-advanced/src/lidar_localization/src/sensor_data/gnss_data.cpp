@@ -17,8 +17,14 @@ GeographicLib::LocalCartesian lidar_localization::GNSSData::geo_converter;
 
 namespace lidar_localization {
 void GNSSData::InitOriginPosition() {
-    geo_converter.Reset(latitude, longitude, altitude);
+    // geo_converter.Reset(latitude, longitude, altitude);
+    // geo_converter.Reset(48.9826506625, 8.39044984163, 116.395850034);
+    
+    // geo_converter.Reset(31.224353, 121.469165, -0.564876);
+    // geo_converter.Reset(48.982531, 8.390346, 116.434464); // rqt_bag
+    geo_converter.Reset(48.9825782722, 8.39039234134, 116.386432648); // ros topic
 
+    //TODO:初始化坐标原点
     origin_latitude = latitude;
     origin_longitude = longitude;
     origin_altitude = altitude;
@@ -31,7 +37,7 @@ void GNSSData::UpdateXYZ() {
         LOG(WARNING) << "WARNING: GeoConverter is NOT initialized.";
     }
 
-    geo_converter.Forward(latitude, longitude, altitude, local_E, local_N, local_U);
+    geo_converter.Forward(latitude, longitude, altitude, local_E, local_N, local_U); // 将大地坐标系转换为局部笛卡尔坐标系
 }
 
 void GNSSData::Reverse(

@@ -146,11 +146,11 @@ bool GNSSINSSimPreprocessFlow::TransformData() {
     
     gnss_pose_ = Eigen::Matrix4f::Identity();
 
-    gnss_pose_(0,3) = +current_gnss_data_.local_N;
+    gnss_pose_(0,3) = +current_gnss_data_.local_N; // pos
     gnss_pose_(1,3) = +current_gnss_data_.local_E;
     gnss_pose_(2,3) = -current_gnss_data_.local_U;
 
-    pos_vel_mag_.pos.x() = +current_gnss_data_.local_N;
+    pos_vel_mag_.pos.x() = +current_gnss_data_.local_N; // pos-vel-mag
     pos_vel_mag_.pos.y() = +current_gnss_data_.local_E;
     pos_vel_mag_.pos.z() = -current_gnss_data_.local_U;
 
@@ -158,11 +158,11 @@ bool GNSSINSSimPreprocessFlow::TransformData() {
     pos_vel_mag_.vel.y() = current_odo_data_.linear_velocity.y;
     pos_vel_mag_.vel.z() = current_odo_data_.linear_velocity.z;
 
-    pos_vel_mag_.mag.x() = current_mag_data_.magnetic_field.x;
+    pos_vel_mag_.mag.x() = current_mag_data_.magnetic_field.x; // 磁场？？ 9轴？
     pos_vel_mag_.mag.y() = current_mag_data_.magnetic_field.y;
     pos_vel_mag_.mag.z() = current_mag_data_.magnetic_field.z;
 
-    // b. transform reference pose position from LLA to xyz:
+    // b. transform reference pose position from LLA to xyz: // LLA是啥：大地坐标系把 -> 笛卡尔坐标系 xyz
     GNSSData ref_position;
 
     ref_position.latitude  = current_ref_pose_data_.pose(0, 3);
@@ -179,12 +179,12 @@ bool GNSSINSSimPreprocessFlow::TransformData() {
 }
 
 bool GNSSINSSimPreprocessFlow::PublishData() {
-    imu_pub_ptr_->Publish(current_imu_data_, current_imu_data_.time);
+    imu_pub_ptr_->Publish(current_imu_data_, current_imu_data_.time); // imu数据
 
-    pos_vel_mag_pub_ptr_->Publish(pos_vel_mag_, current_imu_data_.time);
+    pos_vel_mag_pub_ptr_->Publish(pos_vel_mag_, current_imu_data_.time); // 9轴数据
 
-    gnss_pose_pub_ptr_->Publish(gnss_pose_, current_imu_data_.time);
-    ref_pose_pub_ptr_->Publish(current_ref_pose_data_.pose, current_ref_pose_data_.vel, current_imu_data_.time);
+    gnss_pose_pub_ptr_->Publish(gnss_pose_, current_imu_data_.time); // gnss_pose_ = pos
+    ref_pose_pub_ptr_->Publish(current_ref_pose_data_.pose, current_ref_pose_data_.vel, current_imu_data_.time); // 局部笛卡尔坐标系
 
     return true;
 }
