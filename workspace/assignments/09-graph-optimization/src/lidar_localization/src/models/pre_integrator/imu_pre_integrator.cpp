@@ -232,12 +232,26 @@ void IMUPreIntegrator::UpdateState(void) {
     // 3. get a_mid:
     // 4. update relative translation:
     // 5. update relative velocity:
+    w_mid = (prev_w + curr_w) * 0.5;
 
+    prev_theta_ij = state.theta_ij_; 
+    d_theta_ij = Sophus::SO3d::exp(w_mid * T); // 旋转矩阵R = exp(w*T)
+    state.theta_ij_ *= d_theta_ij;
+
+    curr_theta_ij = state.theta_ij_;
+    a_mid = (prev_theta_ij * prev_a + curr_theta_ij * curr_a) * 0.5;
+
+    state.alpha_ij_ += state.beta_ij_ * T + a_mid * T * T * 0.5;
+    state.beta_ij_ += a_mid * T;
     //
     // TODO: b. update covariance:
     //
     // 1. intermediate results:
-
+    dR_inv =  d_theta_ij.inverse().matrix();
+    prev_R = prev_theta_ij.matrix();
+    curr_R  = curr_theta_ij.matrix();
+    prev_R_a_hat = prev_R * Sophus::SO3d::hat(prev_a);
+    curr_R_a_hat = curr_R * Sophus::SO3d::hat(curr_a);
     //
     // TODO: 2. set up F:
     //
@@ -245,7 +259,16 @@ void IMUPreIntegrator::UpdateState(void) {
     // F14 & F34:
     // F15 & F35:
     // F22:
-
+    F_.block<3,  3>(INDEX_ALPHA,  INDEX_THETA)  =  -0.25 * T  * (prev_R_a_hat  +  curr_R_a_hat * dR_inv) ;   //  F12
+    F_.block<3,  3>(INDEX_BETA, INDEX_THETA)  =  - 0.5 * T *(prev_R_a_hat  + curr_R_a_hat * dR_inv ) ;     //  F32
+    // F14 & F34:
+    F_.block<3,3>(INDEX_ALPHA, INDEX_B_A) =  -0.25 * T * (prev_R + curr_R);    //  F14
+    F_.block<3,3>(INDEX_BETA,INDEX_B_A)  =  -0.5 *  (prev_R + curr_R);       //  F34 
+    // F15 & F25 & F35:
+    F_.block<3,3>(INDEX_ALPHA, INDEX_B_G) = 0.25 * T * T * curr_R_a_hat  ;   //  F15
+    F_.block<3,3>(INDEX_BETA, INDEX_B_G) = 0.5 * T  * curr_R_a_hat;  // F35 
+    //  F22
+    F_.block<3,  3>(INDEX_THETA, INDEX_THETA) =  - Sophus::SO3d::hat(w_mid) ;  //  F22 
     //
     // TODO: 3. set up G:
     //
@@ -253,12 +276,25 @@ void IMUPreIntegrator::UpdateState(void) {
     // G12 & G32:
     // G13 & G33:
     // G14 & G34:
-
+    B_.block<3, 3>(INDEX_ALPHA, INDEX_M_ACC_PREV) = 0.25 * prev_R * T;     //  G11
+    B_.block<3,3>(INDEX_BETA, INDEX_M_ACC_PREV) = 0.5 * prev_R ;           // G31
+    // G12 & G22 & G32:
+    B_.block<3,3>(INDEX_ALPHA, INDEX_M_GYR_PREV) = -0.125 * T * T * curr_R_a_hat ; // G12
+    B_.block<3,3>(INDEX_BETA, INDEX_M_GYR_PREV) = -0.25 * T *curr_R_a_hat ;     // G32
+    // G13 & G33:
+    B_.block<3,3>(INDEX_ALPHA, INDEX_M_ACC_CURR) = 0.25 * curr_R * T ;    //  G13
+    B_.block<3,3>(INDEX_BETA, INDEX_M_ACC_CURR) = 0.5 * curr_R ;    //  G33
+    // G14 & G24 & G34:
+    B_.block<3,3>(INDEX_ALPHA, INDEX_M_GYR_CURR) = -0.125 * T  * T * curr_R_a_hat;  // G14
+    B_.block<3,3>(INDEX_BETA,INDEX_M_GYR_CURR ) =  -0.25 * T *curr_R_a_hat;  // G34
     // TODO: 4. update P_:
-
+    MatrixF F = MatrixF::Identity() + T * F_;
+    MatrixB B = T * B_;
+    P_ = F * P_ * F.transpose() + B * Q_ * B.transpose(); //   Q  imu噪声的方差
     // 
     // TODO: 5. update Jacobian:
     //
+    J_ = F * J_ ;
 }
 
 } // namespace lidar_localization
